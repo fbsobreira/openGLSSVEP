@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <vector>
 #include <GL/glut.h>
+#include <math.h>
 
 #include "ssvepobject.h"
 #include "glhelper.h"
@@ -21,6 +22,15 @@
 //GLint thing1, thing2;
 std::vector<SSVEPObject> oList;
 
+void getPos(GLfloat * V2Pos, GLfloat R, GLfloat angle, GLfloat Size){
+    angle = angle * 3.14 / 180.0 ;
+    V2Pos[0] = R*(GLfloat)sin(angle)-Size/2;
+    V2Pos[1] = R*(GLfloat)cos(angle)+Size/2;
+    V2Pos[2] = R*(GLfloat)sin(angle)+Size/2;
+    V2Pos[3] = R*(GLfloat)cos(angle)-Size/2;
+    return;
+}
+
 //-------------------------------------------------------------------------
 //  Set OpenGL program initial state.
 //-------------------------------------------------------------------------
@@ -28,43 +38,68 @@ void init ()
 {
     //  Set the frame buffer clear color to black.
     glClearColor (0.0, 0.0, 0.0, 1.0);
-
+    GLfloat R=0.7;
+    GLfloat Size=0.35;
+    GLfloat Angle[] = {0,45,90,135,180,225,270,315};
+    float freq[] = {10,4.6,5.4,6.6,8.5,5,6,7.5};
 
     GLfloat color0[3] = {1.0, 1.0, 1.0};
     GLfloat color1[3] = {0.0, 0.0, 0.0};
 
-    GLfloat V2Pos[4] = {-.8, 0.8, -0.4, 0.4};
+    GLfloat V2Pos1[4];// = {-0.9, 0.8, -0.6, 0.2};
+    getPos(V2Pos1,R,Angle[0],Size);
     oList.push_back(SSVEPObject());
-    oList[0].setColor(0,color0);
-    oList[0].setColor(1,color1);
-    oList[0].setV2Pos(V2Pos);
-    oList[0].setFrequency(4.2);
-    oList[0].initObject();
+    oList[0].setV2Pos(V2Pos1);
+    oList[0].setFrequency(freq[0]);
 
-
-    GLfloat V2Pos2[4] = {0.4, 0.8, 0.8, 0.4};
+    GLfloat V2Pos2[4]; // = {-0.4, 0.8, -0.1, 0.2};
+    getPos(V2Pos2,R,Angle[1],Size);
     oList.push_back(SSVEPObject());
-    oList[1].setColor(0,color0);
-    oList[1].setColor(1,color1);
     oList[1].setV2Pos(V2Pos2);
-    oList[1].setFrequency(5);
-    oList[1].initObject();
+    oList[1].setFrequency(freq[1]);
 
-    GLfloat V2Pos3[4] = {-.8, -0.8, -0.4, -0.4};
+    GLfloat V2Pos3[4] = {0.1, 0.8, 0.4, 0.2};
+    getPos(V2Pos3,R,Angle[2],Size);
     oList.push_back(SSVEPObject());
-    oList[2].setColor(0,color0);
-    oList[2].setColor(1,color1);
     oList[2].setV2Pos(V2Pos3);
-    oList[2].setFrequency(15);
-    oList[2].initObject();
+    oList[2].setFrequency(freq[2]);
 
-    GLfloat V2Pos4[4] = {0.4, -0.8, 0.8, -0.4};
+    GLfloat V2Pos4[4] = {0.6, 0.8, 0.9, 0.2};
+    getPos(V2Pos4,R,Angle[3],Size);
     oList.push_back(SSVEPObject());
-    oList[3].setColor(0,color0);
-    oList[3].setColor(1,color1);
     oList[3].setV2Pos(V2Pos4);
-    oList[3].setFrequency(30);
-    oList[3].initObject();
+    oList[3].setFrequency(freq[3]);
+
+
+    GLfloat V2Pos5[4] = {-0.9, -0.8, -0.6, -0.2};
+    getPos(V2Pos5,R,Angle[4],Size);
+    oList.push_back(SSVEPObject());
+    oList[4].setV2Pos(V2Pos5);
+    oList[4].setFrequency(freq[4]);
+
+    GLfloat V2Pos6[4] = {-0.4, -0.8, -0.1, -0.2};
+    getPos(V2Pos6,R,Angle[5],Size);
+    oList.push_back(SSVEPObject());
+    oList[5].setV2Pos(V2Pos6);
+    oList[5].setFrequency(freq[5]);
+
+    GLfloat V2Pos7[4] = {0.1, -0.8, 0.4, -0.2};
+    getPos(V2Pos7,R,Angle[6],Size);
+    oList.push_back(SSVEPObject());
+    oList[6].setV2Pos(V2Pos7);
+    oList[6].setFrequency(freq[6]);
+
+    GLfloat V2Pos8[4] = {0.6, -0.8, 0.9, -0.2};
+    getPos(V2Pos8,R,Angle[7],Size);
+    oList.push_back(SSVEPObject());
+    oList[7].setV2Pos(V2Pos8);
+    oList[7].setFrequency(freq[7]);
+
+    for (unsigned int i=0;i<oList.size();i++){
+        oList[i].setColor(0,color0);
+        oList[i].setColor(1,color1);
+        oList[i].initObject();
+    }
 }
 
 //-------------------------------------------------------------------------
