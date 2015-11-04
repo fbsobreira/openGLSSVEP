@@ -2,64 +2,28 @@
 #define MAIN_H
 //  Include GLUT, OpenGL, and GLU libraries
 #include <GL/gl.h>
-#include <GL/glx.h>
+
 #ifdef __linux__ 
+#include <GL/glx.h>
 #include "glxext.h"	
-
 PFNGLXSWAPINTERVALEXTPROC       glXSwapInterval = NULL;
-/*Display *	glXGetCurrentDisplay = NULL;
-GLXDrawable glXGetCurrentReadDrawable = NULL;
-*/
-// VSync for Windows
-
-bool InitVSync(){
-	// Extension is supported, init pointers.
-        glXSwapInterval = (PFNGLXSWAPINTERVALEXTPROC) glXGetProcAddress((const GLubyte *)"glXSwapIntervalEXT");
-/*        glXGetCurrentDisplay = (PFNGLXGETCURRENTDISPLAYEXTPROC) glXGetProcAddress((const GLubyte *)"glXGetCurrentDisplayEXT");
-        glXGetCurrentReadDrawable = (PFNGLXGETCURRENTDISPLAYEXTPROC) glXGetProcAddress((const GLubyte *)"glXGetCurrentReadDrawable");
-*/
-
-        
-        return true;
-}
-
 #else
+//#include <GL/glxew.h>
 #include "wglext.h"	
 
-PFNWGLSWAPINTERVALEXTPROC       wglSwapIntervalEXT = NULL;
-PFNWGLGETSWAPINTERVALEXTPROC    wglGetSwapIntervalEXT = NULL;
-
-// VSync for Windows
-bool WGLExtensionSupported(const char *extension_name)
-{
-    // this is pointer to function which returns pointer to string with list of all wgl extensions
-    PFNWGLGETEXTENSIONSSTRINGEXTPROC _wglGetExtensionsStringEXT = NULL;
-
-    // determine pointer to wglGetExtensionsStringEXT function
-    _wglGetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC) wglGetProcAddress("wglGetExtensionsStringEXT");
-
-
-    if (_wglGetExtensionsStringEXT==NULL) return FALSE;
-    // extension is supported
-    return true;
-}
-
-bool InitVSync(){
-    if (WGLExtensionSupported("WGL_EXT_swap_control"))
-    {
-        // Extension is supported, init pointers.
-        wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC) wglGetProcAddress("wglSwapIntervalEXT");
-
-        // this is another function from WGL_EXT_swap_control extension
-        wglGetSwapIntervalEXT = (PFNWGLGETSWAPINTERVALEXTPROC) wglGetProcAddress("wglGetSwapIntervalEXT");
-        return true;
-    }
-    return false;
-}
+extern PFNWGLSWAPINTERVALEXTPROC       wglSwapIntervalEXT;
+extern PFNWGLGETSWAPINTERVALEXTPROC    wglGetSwapIntervalEXT;
+bool WGLExtensionSupported(const char *extension_name);
 #endif
+
+
+
+
+bool InitVSync();
 
 //  Initialization
 void init ();
+void changeLayout(int initLayout);
 
 //  Callback functions
 void display (void);
@@ -72,7 +36,7 @@ char *window_title = (char*)"Project: BME897 - SSVEP";
 
 //  Tells whether to display the window full screen or not
 //  Press Alt + Esc to exit a full screen.
-int full_screen = 1;
+int full_screen = 0;
 
 
 //  The number of frames
@@ -89,6 +53,7 @@ void animateObject();
 void drawObject();
 void calculateFPS();
 void drawFPS();
+void drawCLOCK();
 
 
 #endif // MAIN_H

@@ -2,6 +2,8 @@
 #define SSVEPOBJECT_H
 
 #include <GL/glut.h>
+#include <string>
+
 
 class SSVEPObject
 {
@@ -22,9 +24,15 @@ private:
 
     int timeChanged;
     int FreqCount;
+	
+	/* storage for two texture  */
+	GLuint texture[2];
 
 public:
     SSVEPObject();
+	
+	std::string img1;
+	std::string img2;
 
     void setFrequency(float freq);
 
@@ -36,6 +44,11 @@ public:
     void initObject();
     GLint glDraw();
     void printText();
+	
+	void LoadGLTextures();
+	
+	void DrawWithImage();
+	
 
 //signals:
 

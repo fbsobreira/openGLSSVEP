@@ -12,16 +12,39 @@
 #include <stdarg.h>
 #include <vector>
 #include <GL/glut.h>
+#include <GL/freeglut.h>
 #include <math.h>
 
 #include "ssvepobject.h"
 #include "glhelper.h"
+#include "layoutView.h"
 
 #include "main.h"
 
-//GLint thing1, thing2;
+#include <chrono>
+#include "PracticalSocket.h" // For UDPSocket and SocketException
+#include <iostream>          // For cout and cerr
+#include <cstdlib>           // For atoi()
+
+
+
+int DRAWWITHPICTURES=1;
+int DRAWFREQ=0;
+int DRAWFPS=0;
+int DRAWCLOCK=1;
+int SCREEN_SIZE_X=1920;
+int SCREEN_SIZE_Y=1080;
+
+//Templete for Size
+template<class T, size_t N>
+size_t size(T (&)[N]) { return N; }
+
+//List of SSVEP objects
 std::vector<SSVEPObject> oList;
 
+std::vector<layoutView> layoutList;
+
+//Generate Positon based on Polar Coordinates
 void getPos(GLfloat * V2Pos, GLfloat R, GLfloat angle, GLfloat Size){
     angle = angle * 3.14 / 180.0 ;
     V2Pos[0] = R*(GLfloat)sin(angle)-Size/2;
@@ -31,6 +54,10 @@ void getPos(GLfloat * V2Pos, GLfloat R, GLfloat angle, GLfloat Size){
     return;
 }
 
+	unsigned int NLayouts = 2;
+	unsigned int NBlocks = 8;
+		
+
 //-------------------------------------------------------------------------
 //  Set OpenGL program initial state.
 //-------------------------------------------------------------------------
@@ -38,89 +65,103 @@ void init ()
 {
     //  Set the frame buffer clear color to black.
     glClearColor (0.0, 0.0, 0.0, 1.0);
-    GLfloat R=0.7;
-    GLfloat Size=0.35;
-    GLfloat Angle[] = {0,45,90,135,180,225,270,315};
-    float freq[] = {10,4.6,5.4,6.6,8.5,5,6,7.5};
-
-    GLfloat color0[3] = {1.0, 1.0, 1.0};
-    GLfloat color1[3] = {0.0, 0.0, 0.0};
-
-    GLfloat V2Pos1[4];// = {-0.9, 0.8, -0.6, 0.2};
-    getPos(V2Pos1,R,Angle[0],Size);
-    oList.push_back(SSVEPObject());
-    oList[0].setV2Pos(V2Pos1);
-    oList[0].setFrequency(freq[0]);
-
-    GLfloat V2Pos2[4]; // = {-0.4, 0.8, -0.1, 0.2};
-    getPos(V2Pos2,R,Angle[1],Size);
-    oList.push_back(SSVEPObject());
-    oList[1].setV2Pos(V2Pos2);
-    oList[1].setFrequency(freq[1]);
-
-    GLfloat V2Pos3[4] = {0.1, 0.8, 0.4, 0.2};
-    getPos(V2Pos3,R,Angle[2],Size);
-    oList.push_back(SSVEPObject());
-    oList[2].setV2Pos(V2Pos3);
-    oList[2].setFrequency(freq[2]);
-
-    GLfloat V2Pos4[4] = {0.6, 0.8, 0.9, 0.2};
-    getPos(V2Pos4,R,Angle[3],Size);
-    oList.push_back(SSVEPObject());
-    oList[3].setV2Pos(V2Pos4);
-    oList[3].setFrequency(freq[3]);
-
-
-    GLfloat V2Pos5[4] = {-0.9, -0.8, -0.6, -0.2};
-    getPos(V2Pos5,R,Angle[4],Size);
-    oList.push_back(SSVEPObject());
-    oList[4].setV2Pos(V2Pos5);
-    oList[4].setFrequency(freq[4]);
-
-    GLfloat V2Pos6[4] = {-0.4, -0.8, -0.1, -0.2};
-    getPos(V2Pos6,R,Angle[5],Size);
-    oList.push_back(SSVEPObject());
-    oList[5].setV2Pos(V2Pos6);
-    oList[5].setFrequency(freq[5]);
-
-    GLfloat V2Pos7[4] = {0.1, -0.8, 0.4, -0.2};
-    getPos(V2Pos7,R,Angle[6],Size);
-    oList.push_back(SSVEPObject());
-    oList[6].setV2Pos(V2Pos7);
-    oList[6].setFrequency(freq[6]);
-
-    GLfloat V2Pos8[4] = {0.6, -0.8, 0.9, -0.2};
-    getPos(V2Pos8,R,Angle[7],Size);
-    oList.push_back(SSVEPObject());
-    oList[7].setV2Pos(V2Pos8);
-    oList[7].setFrequency(freq[7]);
-
-    for (unsigned int i=0;i<oList.size();i++){
-        oList[i].setColor(0,color0);
-        oList[i].setColor(1,color1);
-        oList[i].initObject();
-    }
+    glEnable(GL_TEXTURE_2D);		// Enable Texture Mapping
+    glClearDepth(1.0);				// Enables Clearing Of The Depth Buffer
+    glDepthFunc(GL_LESS);			// The Type Of Depth Test To Do
+    glShadeModel(GL_SMOOTH);		// Enables Smooth Color Shading
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();				// Reset The Projection Matrix
+    glMatrixMode(GL_MODELVIEW);
+	
+	//Create Layout 1
+	layoutList.push_back(layoutView(8));
+	layoutList.back().setAngles((const GLfloat[]){0,38,90,142,180,218,270,322});
+	layoutList.back().setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back().setR((const GLfloat[]){0.7,0.75,0.8,0.75,0.7,0.75,0.8,0.75});
+	layoutList.back().setFrequencies((const GLfloat[]){10,4.6,5.4,6.6,8.5,5,6,7.5});
+	printf("Init Test\n");
+	layoutList.back().setImages((const char[][25]){{"NurseButton.png"},{"SpellerButton.png"},
+		{"NoButton.png"},{"CommonNeedsButton.png"},{"SleepModeButton.png"},{"MediaControlButton.png"},
+		{"YesButton.png"},{"MedicalNeedsButton.png"}});
+	layoutList.back().setImagesN((const char[][25]){{"NurseButtonN.png"},{"SpellerButtonN.png"},
+		{"NoButtonN.png"},{"CommonNeedsButtonN.png"},{"SleepModeButtonN.png"},{"MediaControlButtonN.png"},
+		{"YesButtonN.png"},{"MedicalNeedsButtonN.png"}});
+	layoutList.back().initObjects();
+    
 }
 
+
+void DrawCubeFace(float fSize)
+{
+  fSize /= 2.0;
+  glBegin(GL_QUADS);
+  glVertex3f(-fSize, -fSize, fSize);    glTexCoord2f (0, 0);
+  glVertex3f(fSize, -fSize, fSize);     glTexCoord2f (1, 0);
+  glVertex3f(fSize, fSize, fSize);      glTexCoord2f (1, 1);
+  glVertex3f(-fSize, fSize, fSize);     glTexCoord2f (0, 1);
+  glEnd();
+}
+void DrawCubeWithTextureCoords (float fSize)
+{
+  glPushMatrix();
+  DrawCubeFace (fSize);
+  glRotatef (90, 1, 0, 0);
+  DrawCubeFace (fSize);
+  glRotatef (90, 1, 0, 0);
+  DrawCubeFace (fSize);
+  glRotatef (90, 1, 0, 0);
+  DrawCubeFace (fSize);
+  glRotatef (90, 0, 1, 0);
+  DrawCubeFace (fSize);
+  glRotatef (180, 0, 1, 0);
+  DrawCubeFace (fSize);
+  glPopMatrix();
+}
+void RenderObjects(void)
+{
+  
+}
 //-------------------------------------------------------------------------
 //  This function is passed to glutDisplayFunc in order to display
 //	OpenGL contents on the window.
 //-------------------------------------------------------------------------
 void display (void)
 {
-    glClear (GL_COLOR_BUFFER_BIT);
+	// Clear buffer
+    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	
+	
+	// Draw Objects in the list
     drawObject();
-    drawFPS();
-
-    //Text
-    glColor3f(1,0,0);
-    for (unsigned int i=0;i<oList.size();i++){
-        oList[i].printText();
-    }
+	
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glColor3f(1.0f,1.0f,1.0f); 
+	// Disaplay update frequency 
+	if (DRAWFPS)
+		drawFPS();
+	if (DRAWCLOCK){
+		//Set Color to Red
+		drawCLOCK();
+	}
+    
+	//Display frequency for each object
+    if (DRAWFREQ) {
+		//Set Color to Red
+		glColor3f(1,0,0); 
+		//Object loop
+		for (unsigned int i=0;i<oList.size();i++){
+			oList[i].printText();
+		}
+	}
+	
+	glPopMatrix();
+	//Swap buffer to screen
     glutSwapBuffers ();
-
-    //glFlush();
-    //glFinish();
+	glFlush();
+	
 }
 
 //-------------------------------------------------------------------------
@@ -128,10 +169,7 @@ void display (void)
 //-------------------------------------------------------------------------
 void drawObject()
 {
-    //glScalef(0.8, 0.8, 1.0);
-    for (unsigned int i=0;i<oList.size();i++){
-        glCallList(oList[i].glDraw());
-    }
+	layoutList.back().Draw();
 }
 
 
@@ -143,9 +181,24 @@ void drawFPS()
     //  Load the identity matrix so that FPS string being drawn
     //  won't get animates
     glLoadIdentity ();
-
     //  Print the FPS to the window
     printw (-0.9, -0.9, 0, (char*)"FPS: %4.2f", fps);
+}
+//-------------------------------------------------------------------------
+//  Draw FPS
+//-------------------------------------------------------------------------
+void drawCLOCK()
+{
+	using std::chrono::system_clock;
+	system_clock::time_point today = system_clock::now();
+	std::time_t tt;
+	tt = system_clock::to_time_t ( today );
+
+	glPushMatrix();
+	glLoadIdentity ();
+    //  Print the FPS to the window
+    printw (GLUT_BITMAP_9_BY_15, 0.7, 0.9, 0, (char*)"%s", ctime(&tt));
+	glPopMatrix();
 }
 
 //-------------------------------------------------------------------------
@@ -156,10 +209,7 @@ void drawFPS()
 //  the app is, instead of having a constant value set by the user.
 //-------------------------------------------------------------------------
 void idle (void)
-{
-    //  Animate the object
-    //animateObject();
-
+{	
     //  Calculate FPS
     calculateFPS();
 
@@ -184,15 +234,12 @@ void calculateFPS()
 
     //  Calculate time passed
     int timeInterval = currentTime - previousTime;
-
     if(timeInterval > 1000)
     {
         //  calculate the number of frames per second
         fps = frameCount / (timeInterval / 1000.0f);
-
         //  Set time
         previousTime = currentTime;
-
         //  Reset frame count
         frameCount = 0;
     }
@@ -204,16 +251,49 @@ void calculateFPS()
 //-------------------------------------------------------------------------
 void reshape (int w, int h)
 {
-    //  Stay updated with the window width and height
-    window_width = w;
+	window_width = w;
     window_height = h;
+	
+	int scale = floor((h-SCREEN_SIZE_Y)/2);
 
-    //  Reset viewport
-    glViewport(0, 0, window_width, window_height);
+    // Scale to the Screen Size
+    glViewport(floor(w-SCREEN_SIZE_X-scale)/2, floor(h-SCREEN_SIZE_Y-scale)/2, SCREEN_SIZE_X+scale, SCREEN_SIZE_Y+scale);
 }
 
 extern GLvoid *font_style;
+//-------------------------------------------------------------------------
+//  This function is passed to the glutKeyboardFunc and is called
+//  whenever a key is pressed.
+//-------------------------------------------------------------------------
+static void Key(unsigned char key, int x, int y)
+{
 
+    switch (key) {
+		case '1':
+			//changeLayout(0);
+		break;
+		case '2':
+			//changeLayout(1);
+		break;
+		case '0':
+			if (full_screen){
+				glutReshapeWindow(SCREEN_SIZE_X, SCREEN_SIZE_Y);
+				centerOnScreen ();
+				full_screen=false;
+			}else{
+				glutFullScreen();
+				full_screen=true;
+			}
+			
+		break;
+		case 27:
+			//glutLeaveMainLoop();
+			glutExit();
+			//exit(0);
+    }
+	// RE-Display
+    glutPostRedisplay();
+}
 //-------------------------------------------------------------------------
 //  Program Main method.
 //-------------------------------------------------------------------------
@@ -221,9 +301,10 @@ int main (int argc, char **argv)
 {
 
     //  variables representing the window size
-    window_width = 640;
-    window_height = 480;
+    window_width = SCREEN_SIZE_X;
+    window_height = SCREEN_SIZE_Y;
 
+	// Define fonte style
     font_style = GLUT_BITMAP_9_BY_15;
 
     //  Connect to the windowing system
@@ -240,7 +321,7 @@ int main (int argc, char **argv)
     glutInitWindowPosition (screenWindow_x, screenWindow_y);
 
     //  Set Display mode
-    glutInitDisplayMode (GLUT_RGBA | GLUT_ALPHA | GLUT_DOUBLE | GLUT_ACCUM);
+    glutInitDisplayMode (GLUT_DEPTH | GLUT_RGBA | GLUT_ALPHA | GLUT_DOUBLE | GLUT_ACCUM);
 
 
     //  Create window with the specified title
@@ -264,9 +345,39 @@ int main (int argc, char **argv)
     // Set the callback functions
     glutDisplayFunc (display);
     glutReshapeFunc  (reshape);
+	glutKeyboardFunc(Key);
     glutIdleFunc (idle);
+	
+	
 
     //  Start GLUT event processing loop
     glutMainLoop();
+	
+	printf("AAA\n");
 }
 
+#ifdef __linux__ 
+bool InitVSync(){
+	// Extension is supported, init pointers.
+        glXSwapInterval = (PFNGLXSWAPINTERVALEXTPROC) glXGetProcAddress((const GLubyte *)"glXSwapIntervalEXT");
+/*        glXGetCurrentDisplay = (PFNGLXGETCURRENTDISPLAYEXTPROC) glXGetProcAddress((const GLubyte *)"glXGetCurrentDisplayEXT");
+        glXGetCurrentReadDrawable = (PFNGLXGETCURRENTDISPLAYEXTPROC) glXGetProcAddress((const GLubyte *)"glXGetCurrentReadDrawable");
+*/
+
+        
+        return true;
+}
+#else
+bool InitVSync(){
+    if (WGLExtensionSupported("WGL_EXT_swap_control"))
+    {
+        // Extension is supported, init pointers.
+        wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC) wglGetProcAddress("wglSwapIntervalEXT");
+
+        // this is another function from WGL_EXT_swap_control extension
+        wglGetSwapIntervalEXT = (PFNWGLGETSWAPINTERVALEXTPROC) wglGetProcAddress("wglGetSwapIntervalEXT");
+        return true;
+    }
+    return false;
+}
+#endif

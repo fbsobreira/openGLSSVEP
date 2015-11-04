@@ -14,6 +14,6 @@ void centerOnScreen ();
 
 //  printf prints to file. printw prints to window
 void printw (float x, float y, float z, char* format, ...);
-
+void printw (GLvoid *font, float x, float y, float z, char* format, ...);
 
 #endif // GLHELPER

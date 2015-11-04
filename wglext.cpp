@@ -19,7 +19,7 @@ bool WGLExtensionSupported(const char *extension_name)
     // extension is supported
     return true;
 }
-
+/*
 bool InitVSync(){
     if (WGLExtensionSupported("WGL_EXT_swap_control"))
     {
@@ -31,5 +31,5 @@ bool InitVSync(){
         return true;
     }
     return false;
-}
+}*/
 #endif
