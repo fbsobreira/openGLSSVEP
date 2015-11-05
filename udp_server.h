@@ -1,9 +1,15 @@
 #ifndef UDP_SERVER_H
 #define UDP_SERVER_H
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
+#ifdef __linux__ 
+	#include <sys/types.h>
+	#include <sys/socket.h>
+	#include <netdb.h>
+#else
+	#include <windows.h>      // Needed for all Winsock stuff
+	//#define _WIN32_WINNT 0x501
+	#include <ws2tcpip.h>
+#endif
 #include <stdexcept>
 
 class udp_server
@@ -28,6 +34,11 @@ private:
     struct addrinfo *   f_addrinfo;\
 	
 	int					new_data;
+	
+	#ifndef __linux__ 
+	WORD wVersionRequested = MAKEWORD(1,1);       // Stuff for WSA functions
+	WSADATA wsaData;                              // Stuff for WSA functions
+	#endif
 	
 };
 

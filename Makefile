@@ -4,7 +4,7 @@ ifeq "$(VERSION)" "WIN"
 # Set compiler to Linux CrossCompile Windows
 CXX = i686-w64-mingw32-gcc
 # Set Load flags to include SDL
-LDFLAGS = -lSOIL -lopengl32 -lglu32 -lglew32 -lfreeglut
+LDFLAGS = -lSOIL -lopengl32 -lglu32 -lglew32 -lfreeglut -lfreetype -lws2_32
 COMPW = -lstdc++
 # Set target
 EXE = openGLSSVEP.exe

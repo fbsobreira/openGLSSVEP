@@ -48,6 +48,11 @@ udp_server::udp_server(const std::string& addr, int port)
     : f_port(port)
     , f_addr(addr)
 {
+	#ifndef __linux__ 
+		// This stuff initializes winsock
+		WSAStartup(wVersionRequested, &wsaData);
+	#endif
+  
     char decimal_port[16];
     snprintf(decimal_port, sizeof(decimal_port), "%d", f_port);
     decimal_port[sizeof(decimal_port) / sizeof(decimal_port[0]) - 1] = '\0';
@@ -61,7 +66,11 @@ udp_server::udp_server(const std::string& addr, int port)
     {
         throw udp_server_runtime_error(("invalid address or port for UDP socket: \"" + addr + ":" + decimal_port + "\"").c_str());
     }
+	#ifdef __linux__ 
     f_socket = socket(f_addrinfo->ai_family, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
+	#else
+	f_socket = socket(f_addrinfo->ai_family, SOCK_DGRAM, IPPROTO_UDP);
+	#endif
     if(f_socket == -1)
     {
         freeaddrinfo(f_addrinfo);
@@ -75,14 +84,15 @@ udp_server::udp_server(const std::string& addr, int port)
         throw udp_server_runtime_error(("could not bind UDP socket with: \"" + addr + ":" + decimal_port + "\"").c_str());
     }
 	
-	#ifdef WIN
+	#ifdef __linux__ 
+		int flags = fcntl(f_socket, F_GETFL, 0);
+		fcntl(f_socket, F_SETFL, flags | O_NONBLOCK);
+	#else
 		// Make client_s non-blocking
 		unsigned long int noBlock = 1;
 		noBlock = 1;
 		ioctlsocket(f_socket, FIONBIO, &noBlock);
-	#else
-		int flags = fcntl(f_socket, F_GETFL, 0);
-		fcntl(f_socket, F_SETFL, flags | O_NONBLOCK);
+		
 	#endif
 }
 
