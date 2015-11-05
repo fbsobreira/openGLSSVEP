@@ -125,7 +125,7 @@ GLint SSVEPObject::glDraw(){
 	    //if(++FreqCount>=FreqAverage){
             	int deltaTime = glutGet(GLUT_ELAPSED_TIME) - timeChanged;
             	timeChanged = glutGet(GLUT_ELAPSED_TIME);
-	        Freq = 1000.0/deltaTime;
+	        Freq = 1000.0*FreqAverage/deltaTime;
 	        //Freq = (1000.0*FreqAverage/deltaTime);
 		FreqCount=0;
 	    //}
@@ -141,7 +141,7 @@ GLint SSVEPObject::glDraw(){
 
 void SSVEPObject::DrawWithImage(){
 	
-	int FreqAverage=1;
+	float FreqAverage=1;
     int count = (LastColor==0)?FrameCount1:FrameCount2;
 
     if (++FrameCount>=count){
@@ -151,7 +151,7 @@ void SSVEPObject::DrawWithImage(){
 	    //if(++FreqCount>=FreqAverage){
             	int deltaTime = glutGet(GLUT_ELAPSED_TIME) - timeChanged;
             	timeChanged = glutGet(GLUT_ELAPSED_TIME);
-	        Freq = 1000.0/deltaTime;
+	        Freq = 1000.0*FreqAverage/deltaTime;
 	        //Freq = (1000.0*FreqAverage/deltaTime);
 		FreqCount=0;
 	    //}

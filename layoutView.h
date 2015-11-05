@@ -19,7 +19,7 @@ extern int SCREEN_SIZE_Y;
 class layoutView
 {
 private:
-	int _NBlocks;
+	unsigned int _NBlocks;
 	GLfloat BlockSize_X;
 	GLfloat BlockSize_Y;
 	GLfloat * _R;
@@ -36,7 +36,7 @@ private:
 
 	
 public:
-	layoutView(int NBlocks);
+	layoutView(unsigned int NBlocks);
 	~layoutView();
 	
 	void getPos(GLfloat * V2Pos, GLfloat R, GLfloat angle, GLfloat SizeX, GLfloat SizeY);

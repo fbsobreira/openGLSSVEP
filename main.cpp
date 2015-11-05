@@ -22,11 +22,13 @@
 #include "main.h"
 
 #include <chrono>
-#include "PracticalSocket.h" // For UDPSocket and SocketException
+#include "udp_server.h" // For UDPSocket and SocketException
 #include <iostream>          // For cout and cerr
 #include <cstdlib>           // For atoi()
 
 
+#include "FreeType.h"
+freetype::font_data our_font;
 
 int DRAWWITHPICTURES=1;
 int DRAWFREQ=0;
@@ -34,6 +36,14 @@ int DRAWFPS=0;
 int DRAWCLOCK=1;
 int SCREEN_SIZE_X=1920;
 int SCREEN_SIZE_Y=1080;
+
+char *UDP_BUFFER = new char[100];
+// Start UDP Server
+udp_server UDP = udp_server("0.0.0.0", 5000);
+
+int feedback_box=0;
+int feedback_box_count=0;
+
 
 //Templete for Size
 template<class T, size_t N>
@@ -87,6 +97,8 @@ void init ()
 		{"NoButtonN.png"},{"CommonNeedsButtonN.png"},{"SleepModeButtonN.png"},{"MediaControlButtonN.png"},
 		{"YesButtonN.png"},{"MedicalNeedsButtonN.png"}});
 	layoutList.back().initObjects();
+	
+	our_font.init("Test.ttf", 16);
     
 }
 
@@ -117,9 +129,29 @@ void DrawCubeWithTextureCoords (float fSize)
   DrawCubeFace (fSize);
   glPopMatrix();
 }
-void RenderObjects(void)
+
+/* Here goes our drawing code */
+int drawFeedback( int BOX, float posx, float posy, float scale )
 {
-  
+	GLint m_viewport[4];
+	glGetIntegerv( GL_VIEWPORT, m_viewport );
+	
+	int W = m_viewport[2]-m_viewport[0];
+	int H = m_viewport[3]-m_viewport[1];
+	posx= (float)W/2+(float)W/2*posx;
+	posy= (float)H/2+((float)H/2)*posy;
+	
+	printf("W: %d\n",W);
+	printf("H: %d\n",H);
+	printf("X: %f\n",posx);
+	printf("Y: %f\n",posy);
+
+	glPushMatrix();
+	glLoadIdentity();
+	glScalef(scale,scale,1);
+	freetype::print(our_font, posx, posy, "%d", BOX);
+	glPopMatrix();
+    return( 1 );
 }
 //-------------------------------------------------------------------------
 //  This function is passed to glutDisplayFunc in order to display
@@ -138,13 +170,25 @@ void display (void)
     drawObject();
 	
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glColor3f(1.0f,1.0f,1.0f); 
+	
 	// Disaplay update frequency 
 	if (DRAWFPS)
 		drawFPS();
 	if (DRAWCLOCK){
-		//Set Color to Red
+		//Set Color to White
+		glColor3f(1.0f,1.0f,1.0f); 
 		drawCLOCK();
+	}
+	
+	if (UDP.HAS_DATA()){
+		feedback_box_count=120;
+		feedback_box = std::atoi(UDP_BUFFER);
+	}
+	//Set Color to Red
+	if (feedback_box_count>0){
+		glColor3f(1,0,0); 
+		drawFeedback(feedback_box,-.1,0,8);
+		feedback_box_count--;
 	}
     
 	//Display frequency for each object
@@ -184,6 +228,7 @@ void drawFPS()
     //  Print the FPS to the window
     printw (-0.9, -0.9, 0, (char*)"FPS: %4.2f", fps);
 }
+
 //-------------------------------------------------------------------------
 //  Draw FPS
 //-------------------------------------------------------------------------
@@ -195,9 +240,9 @@ void drawCLOCK()
 	tt = system_clock::to_time_t ( today );
 
 	glPushMatrix();
-	glLoadIdentity ();
-    //  Print the FPS to the window
-    printw (GLUT_BITMAP_9_BY_15, 0.7, 0.9, 0, (char*)"%s", ctime(&tt));
+ 	glLoadIdentity ();
+    //  Print the FPS to  the window
+    printw (GLUT_BITMAP_HELVETICA_18, 0.7, 0.9, 0, (char*)"%s", ctime(&tt));
 	glPopMatrix();
 }
 
@@ -212,6 +257,14 @@ void idle (void)
 {	
     //  Calculate FPS
     calculateFPS();
+	
+	//Verify UDP Buffer
+	int rec = UDP.timed_recv(UDP_BUFFER,sizeof(UDP_BUFFER),1000);
+	if (rec>0) {
+		UDP_BUFFER[rec]=0;
+		printf("T: %.*s\n",rec, UDP_BUFFER);
+	}
+	
 
     //  Call display function (draw the current frame)
     glutPostRedisplay ();
@@ -348,12 +401,9 @@ int main (int argc, char **argv)
 	glutKeyboardFunc(Key);
     glutIdleFunc (idle);
 	
-	
-
     //  Start GLUT event processing loop
     glutMainLoop();
 	
-	printf("AAA\n");
 }
 
 #ifdef __linux__ 

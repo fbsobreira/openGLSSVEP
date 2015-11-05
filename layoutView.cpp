@@ -4,7 +4,7 @@
 
 #include <math.h>
 
-layoutView::layoutView(int NBlocks)
+layoutView::layoutView(unsigned int NBlocks)
 {
 	_R = (GLfloat*) malloc(NBlocks);
 	_Angles = (GLfloat*) malloc(NBlocks);
@@ -86,12 +86,12 @@ void layoutView::Draw(){
 	glPopMatrix();
 }
 void layoutView::setImages(const char args[][25]){
-	for (int i=0;i<_NBlocks;i++){
+	for (unsigned int i=0;i<_NBlocks;i++){
 		_imageList.push_back(args[i]);
 	}
 }
 void layoutView::setImagesN(const char args[][25]){
-	for (int i=0;i<_NBlocks;i++){
+	for (unsigned int i=0;i<_NBlocks;i++){
 		_imageListN.push_back(args[i]);
 	}
 }

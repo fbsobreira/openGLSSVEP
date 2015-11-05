@@ -32,6 +32,10 @@
     <File Name="Makefile"/>
     <File Name="layoutView.h"/>
     <File Name="layoutView.cpp"/>
+    <File Name="udp_server.h"/>
+    <File Name="udp_server.cpp"/>
+    <File Name="FreeType.cpp"/>
+    <File Name="FreeType.h"/>
   </VirtualDirectory>
   <Settings Type="Dynamic Library">
     <GlobalSettings>
