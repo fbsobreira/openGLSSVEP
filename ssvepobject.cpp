@@ -38,7 +38,6 @@ void SSVEPObject::setV2Pos(GLfloat *V){
 void SSVEPObject::initObject(){
 	// Load The Texture(s) 
 	LoadGLTextures();
-
     glNewList(glDrawC1, GL_COMPILE);
     glColor3f(color1[0],color1[1],color1[2]);
     glRectf(V2Pos[0],V2Pos[1],V2Pos[2],V2Pos[3]);
@@ -52,7 +51,7 @@ void SSVEPObject::initObject(){
 }
 
 void SSVEPObject::setFrequency(float freq){
-    int freqInt = (int)(freq*10);
+    int freqInt = (int)(freq*10+0.5);
     switch (freqInt) {
     case 300:
         FrameCount1=1;
@@ -198,14 +197,22 @@ void SSVEPObject::printText(){
 void SSVEPObject::LoadGLTextures() {	
 	
 	/* load an image file directly as a new OpenGL texture */
+	#ifdef __linux__ 
+		std::string IMG1 = "media/icons/"+img1;
+		std::string IMG2 = "media/icons/"+img2;
+	#else
+		std::string IMG1 = ".\\media\\icons\\"+img1;
+		std::string IMG2 = ".\\media\\icons\\"+img2;
+	#endif
+	
 	texture[0] = SOIL_load_OGL_texture
 		(
-		("media/icons/"+img1).c_str(),
+		IMG1.c_str(),
 		SOIL_LOAD_AUTO,
 		SOIL_CREATE_NEW_ID,
 		SOIL_FLAG_INVERT_Y
 		);
-
+	
 	if(texture[0] == 0)
 		return;
 
@@ -218,7 +225,7 @@ void SSVEPObject::LoadGLTextures() {
 	/* load an image file directly as a new OpenGL texture */
 	texture[1] = SOIL_load_OGL_texture
 		(
-		("media/icons/"+img2).c_str(),
+		IMG2.c_str(),
 		SOIL_LOAD_AUTO,
 		SOIL_CREATE_NEW_ID,
 		SOIL_FLAG_INVERT_Y

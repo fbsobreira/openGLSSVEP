@@ -32,7 +32,7 @@ private:
     GLfloat color1[3];
 	
 	//List of SSVEP objects
-	std::vector<SSVEPObject> oList;
+	std::vector<SSVEPObject*> oList;
 
 	
 public:

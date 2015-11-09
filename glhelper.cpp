@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <GL/glut.h>
+#include <GL/freeglut.h>
 
 #include "glhelper.h"
 

@@ -32,15 +32,18 @@ freetype::font_data our_font;
 
 int DRAWWITHPICTURES=1;
 int DRAWFREQ=0;
-int DRAWFPS=0;
+int DRAWFPS=1;
 int DRAWCLOCK=1;
-int SCREEN_SIZE_X=1920;
-int SCREEN_SIZE_Y=1080;
+//int SCREEN_SIZE_X=1920;
+//int SCREEN_SIZE_Y=1080;
+int SCREEN_SIZE_X=1600;
+int SCREEN_SIZE_Y=900;
 
+//UDP Buffer
 char *UDP_BUFFER = new char[100];
 // Start UDP Server
-udp_server UDP = udp_server("0.0.0.0", 5000);
-
+udp_server *UDP;
+// feedback aux
 int feedback_box=0;
 int feedback_box_count=0;
 
@@ -49,23 +52,8 @@ int feedback_box_count=0;
 template<class T, size_t N>
 size_t size(T (&)[N]) { return N; }
 
-//List of SSVEP objects
-std::vector<SSVEPObject> oList;
-
-std::vector<layoutView> layoutList;
-
-//Generate Positon based on Polar Coordinates
-void getPos(GLfloat * V2Pos, GLfloat R, GLfloat angle, GLfloat Size){
-    angle = angle * 3.14 / 180.0 ;
-    V2Pos[0] = R*(GLfloat)sin(angle)-Size/2;
-    V2Pos[1] = R*(GLfloat)cos(angle)+Size/2;
-    V2Pos[2] = R*(GLfloat)sin(angle)+Size/2;
-    V2Pos[3] = R*(GLfloat)cos(angle)-Size/2;
-    return;
-}
-
-	unsigned int NLayouts = 2;
-	unsigned int NBlocks = 8;
+// Layouts List
+std::vector<layoutView*> layoutList;
 		
 
 //-------------------------------------------------------------------------
@@ -84,68 +72,25 @@ void init ()
     glMatrixMode(GL_MODELVIEW);
 	
 	//Create Layout 1
-	layoutList.push_back(layoutView(8));
-	layoutList.back().setAngles((const GLfloat[]){0,38,90,142,180,218,270,322});
-	layoutList.back().setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
-	layoutList.back().setR((const GLfloat[]){0.7,0.75,0.8,0.75,0.7,0.75,0.8,0.75});
-	layoutList.back().setFrequencies((const GLfloat[]){10,4.6,5.4,6.6,8.5,5,6,7.5});
-	printf("Init Test\n");
-	layoutList.back().setImages((const char[][25]){{"NurseButton.png"},{"SpellerButton.png"},
+	layoutList.push_back(new layoutView(8));
+	layoutList.back()->setAngles((const GLfloat[]){0,38,90,142,180,218,270,322});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.7,0.75,0.8,0.75,0.7,0.75,0.8,0.75});
+	layoutList.back()->setFrequencies((const float []){10,4.6,5.4,6.6,8.5,5,6,7.5});
+	layoutList.back()->setImages((const char[][25]){{"NurseButton.png"},{"SpellerButton.png"},
 		{"NoButton.png"},{"CommonNeedsButton.png"},{"SleepModeButton.png"},{"MediaControlButton.png"},
 		{"YesButton.png"},{"MedicalNeedsButton.png"}});
-	layoutList.back().setImagesN((const char[][25]){{"NurseButtonN.png"},{"SpellerButtonN.png"},
+	layoutList.back()->setImagesN((const char[][25]){{"NurseButtonN.png"},{"SpellerButtonN.png"},
 		{"NoButtonN.png"},{"CommonNeedsButtonN.png"},{"SleepModeButtonN.png"},{"MediaControlButtonN.png"},
 		{"YesButtonN.png"},{"MedicalNeedsButtonN.png"}});
-	layoutList.back().initObjects();
-	
+	layoutList.back()->initObjects();
 	our_font.init("Test.ttf", 16);
     
-}
-
-
-void DrawCubeFace(float fSize)
-{
-  fSize /= 2.0;
-  glBegin(GL_QUADS);
-  glVertex3f(-fSize, -fSize, fSize);    glTexCoord2f (0, 0);
-  glVertex3f(fSize, -fSize, fSize);     glTexCoord2f (1, 0);
-  glVertex3f(fSize, fSize, fSize);      glTexCoord2f (1, 1);
-  glVertex3f(-fSize, fSize, fSize);     glTexCoord2f (0, 1);
-  glEnd();
-}
-void DrawCubeWithTextureCoords (float fSize)
-{
-  glPushMatrix();
-  DrawCubeFace (fSize);
-  glRotatef (90, 1, 0, 0);
-  DrawCubeFace (fSize);
-  glRotatef (90, 1, 0, 0);
-  DrawCubeFace (fSize);
-  glRotatef (90, 1, 0, 0);
-  DrawCubeFace (fSize);
-  glRotatef (90, 0, 1, 0);
-  DrawCubeFace (fSize);
-  glRotatef (180, 0, 1, 0);
-  DrawCubeFace (fSize);
-  glPopMatrix();
 }
 
 /* Here goes our drawing code */
 int drawFeedback( int BOX, float posx, float posy, float scale )
 {
-	GLint m_viewport[4];
-	glGetIntegerv( GL_VIEWPORT, m_viewport );
-	
-	int W = m_viewport[2]-m_viewport[0];
-	int H = m_viewport[3]-m_viewport[1];
-	posx= (float)W/2+(float)W/2*posx;
-	posy= (float)H/2+((float)H/2)*posy;
-	
-	printf("W: %d\n",W);
-	printf("H: %d\n",H);
-	printf("X: %f\n",posx);
-	printf("Y: %f\n",posy);
-
 	glPushMatrix();
 	glLoadIdentity();
 	glScalef(scale,scale,1);
@@ -169,36 +114,37 @@ void display (void)
 	// Draw Objects in the list
     drawObject();
 	
+	//Clear texture to write text
 	glBindTexture(GL_TEXTURE_2D, 0);
 	
 	// Disaplay update frequency 
-	if (DRAWFPS)
+	if (DRAWFPS){
+		//Set Color to Red
+		glColor3f(1.0f,0.0f,0.0f); 
 		drawFPS();
+	}
 	if (DRAWCLOCK){
 		//Set Color to White
 		glColor3f(1.0f,1.0f,1.0f); 
 		drawCLOCK();
 	}
 	
-	if (UDP.HAS_DATA()){
+	if (UDP->HAS_DATA()){
 		feedback_box_count=120;
 		feedback_box = std::atoi(UDP_BUFFER);
 	}
-	//Set Color to Red
+	
 	if (feedback_box_count>0){
-		glColor3f(1,0,0); 
-		drawFeedback(feedback_box,-.1,0,8);
+		//Set Color to Red
+		glColor3f(1.0f,0.0f,0.0f); 
+		drawFeedback(feedback_box,-.1,0.0,8);
 		feedback_box_count--;
 	}
     
 	//Display frequency for each object
     if (DRAWFREQ) {
 		//Set Color to Red
-		glColor3f(1,0,0); 
-		//Object loop
-		for (unsigned int i=0;i<oList.size();i++){
-			oList[i].printText();
-		}
+		glColor3f(1.0f,0.0f,0.0f); 
 	}
 	
 	glPopMatrix();
@@ -213,20 +159,20 @@ void display (void)
 //-------------------------------------------------------------------------
 void drawObject()
 {
-	layoutList.back().Draw();
+	layoutList.back()->Draw();
 }
-
 
 //-------------------------------------------------------------------------
 //  Draw FPS
 //-------------------------------------------------------------------------
 void drawFPS()
 {
-    //  Load the identity matrix so that FPS string being drawn
-    //  won't get animates
-    glLoadIdentity ();
+   	glPushMatrix();
+ 	glLoadIdentity ();
+	glScalef(.5,.5,1);
     //  Print the FPS to the window
-    printw (-0.9, -0.9, 0, (char*)"FPS: %4.2f", fps);
+	freetype::print(our_font, -0.9, -0.9, "FPS: %4.2f", fps);
+	glPopMatrix();
 }
 
 //-------------------------------------------------------------------------
@@ -239,10 +185,15 @@ void drawCLOCK()
 	std::time_t tt;
 	tt = system_clock::to_time_t ( today );
 
+
 	glPushMatrix();
  	glLoadIdentity ();
+	glScalef(.7,.7,1);
     //  Print the FPS to  the window
-    printw (GLUT_BITMAP_HELVETICA_18, 0.7, 0.9, 0, (char*)"%s", ctime(&tt));
+	//printw (GLUT_BITMAP_HELVETICA_18, 0.7, 0.9, 0, (char*)"%s", ctime(&tt));
+    //printw (GLUT_BITMAP_TIMES_ROMAN_24, 0.7, 0.9, 0, (char*)"%s", ctime(&tt));
+	//printw (GLUT_BITMAP_9_BY_15, 0.7, 0.8, 0, (char*)"%s", ctime(&tt));
+	freetype::print(our_font, 0.65, 0.9, "%s", ctime(&tt));
 	glPopMatrix();
 }
 
@@ -259,10 +210,10 @@ void idle (void)
     calculateFPS();
 	
 	//Verify UDP Buffer
-	int rec = UDP.timed_recv(UDP_BUFFER,sizeof(UDP_BUFFER),1000);
+	int rec = UDP->timed_recv(UDP_BUFFER,100,100);
 	if (rec>0) {
-		UDP_BUFFER[rec]=0;
-		printf("T: %.*s\n",rec, UDP_BUFFER);
+		//UDP_BUFFER[rec]=0;
+		printf("T:%d: %.*s\n",rec,rec, UDP_BUFFER);
 	}
 	
 
@@ -307,10 +258,11 @@ void reshape (int w, int h)
 	window_width = w;
     window_height = h;
 	
-	int scale = floor((h-SCREEN_SIZE_Y)/2);
+	int scaleX = floor((w-SCREEN_SIZE_X)/2);
+	int scaleY = floor((h-SCREEN_SIZE_Y)/2);
 
     // Scale to the Screen Size
-    glViewport(floor(w-SCREEN_SIZE_X-scale)/2, floor(h-SCREEN_SIZE_Y-scale)/2, SCREEN_SIZE_X+scale, SCREEN_SIZE_Y+scale);
+    glViewport(floor(w-SCREEN_SIZE_X-scaleX)/2, floor(h-SCREEN_SIZE_Y-scaleY)/2, SCREEN_SIZE_X+scaleX, SCREEN_SIZE_Y+scaleY);
 }
 
 extern GLvoid *font_style;
@@ -401,6 +353,9 @@ int main (int argc, char **argv)
 	glutKeyboardFunc(Key);
     glutIdleFunc (idle);
 	
+	//Init UDP
+	 UDP = new udp_server("127.0.0.1", 1050);
+	
     //  Start GLUT event processing loop
     glutMainLoop();
 	
@@ -409,13 +364,8 @@ int main (int argc, char **argv)
 #ifdef __linux__ 
 bool InitVSync(){
 	// Extension is supported, init pointers.
-        glXSwapInterval = (PFNGLXSWAPINTERVALEXTPROC) glXGetProcAddress((const GLubyte *)"glXSwapIntervalEXT");
-/*        glXGetCurrentDisplay = (PFNGLXGETCURRENTDISPLAYEXTPROC) glXGetProcAddress((const GLubyte *)"glXGetCurrentDisplayEXT");
-        glXGetCurrentReadDrawable = (PFNGLXGETCURRENTDISPLAYEXTPROC) glXGetProcAddress((const GLubyte *)"glXGetCurrentReadDrawable");
-*/
-
-        
-        return true;
+    glXSwapInterval = (PFNGLXSWAPINTERVALEXTPROC) glXGetProcAddress((const GLubyte *)"glXSwapIntervalEXT");
+    return true;
 }
 #else
 bool InitVSync(){

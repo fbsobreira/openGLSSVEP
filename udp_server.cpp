@@ -2,8 +2,9 @@
 
 #include <string.h>
 #include <unistd.h>
+#ifdef __linux__ 
 #include <sys/fcntl.h> // for non-blocking
-
+#endif
 
 class udp_server_runtime_error : public std::runtime_error
 {
@@ -57,7 +58,7 @@ udp_server::udp_server(const std::string& addr, int port)
     snprintf(decimal_port, sizeof(decimal_port), "%d", f_port);
     decimal_port[sizeof(decimal_port) / sizeof(decimal_port[0]) - 1] = '\0';
     struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
+    memset(&hints, 0, sizeof(addrinfo));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
@@ -84,15 +85,14 @@ udp_server::udp_server(const std::string& addr, int port)
         throw udp_server_runtime_error(("could not bind UDP socket with: \"" + addr + ":" + decimal_port + "\"").c_str());
     }
 	
+	// Make client non-blocking
 	#ifdef __linux__ 
 		int flags = fcntl(f_socket, F_GETFL, 0);
 		fcntl(f_socket, F_SETFL, flags | O_NONBLOCK);
 	#else
-		// Make client_s non-blocking
 		unsigned long int noBlock = 1;
 		noBlock = 1;
 		ioctlsocket(f_socket, FIONBIO, &noBlock);
-		
 	#endif
 }
 
@@ -194,7 +194,9 @@ int udp_server::timed_recv(char *msg, size_t max_size, int max_wait_ms)
     timeout.tv_sec = max_wait_ms / 1000;
     timeout.tv_usec = (max_wait_ms % 1000) * 1000;
     int retval = select(f_socket + 1, &s, &s, &s, &timeout);
+	#ifdef __linux__ 
 	retval--;
+	#endif
     if(retval == -1)
     {
         // select() set errno accordingly
@@ -202,9 +204,12 @@ int udp_server::timed_recv(char *msg, size_t max_size, int max_wait_ms)
     }
     if(retval > 0)
     {
-		new_data = 1;
+		int ret = ::recv(f_socket, msg, max_size, 0);
+		if (ret>0){
+			new_data = 1;
+		}
         // our socket has data
-        return ::recv(f_socket, msg, max_size, 0);
+        return ret;
     }
 
     // our socket has no data

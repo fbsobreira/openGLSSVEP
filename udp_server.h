@@ -6,9 +6,10 @@
 	#include <sys/socket.h>
 	#include <netdb.h>
 #else
-	#include <windows.h>      // Needed for all Winsock stuff
+	#include <winsock2.h>
 	//#define _WIN32_WINNT 0x501
 	#include <ws2tcpip.h>
+	//#include <windows.h>      // Needed for all Winsock stuff
 #endif
 #include <stdexcept>
 
@@ -31,7 +32,7 @@ private:
     int                 f_socket;
     int                 f_port;
     std::string         f_addr;
-    struct addrinfo *   f_addrinfo;\
+    struct addrinfo *   f_addrinfo;
 	
 	int					new_data;
 	
