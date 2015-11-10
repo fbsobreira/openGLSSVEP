@@ -3,6 +3,7 @@
 
 #include "glhelper.h"
 
+
 #ifdef __linux__ 
 #include <stdarg.h>
 int _vscprintf (const char * format, va_list pargs) { 
@@ -13,11 +14,12 @@ int _vscprintf (const char * format, va_list pargs) {
       va_end(argcopy); 
       return retval; 
    }
+#endif 
+
 #ifdef __GNUC__
 #define vsprintf_s vsnprintf
 #endif
 
-#endif 
 
 int screenWindow_x;
 int screenWindow_y;

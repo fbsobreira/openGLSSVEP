@@ -9,6 +9,15 @@ COMPW = -lstdc++
 # Set target
 EXE = openGLSSVEP.exe
 FREETYPE_INCLUDE = /usr/include/freetype2
+else ifeq "$(VERSION)" "MINGW"
+# Set compiler to Linux CrossCompile Windows
+CXX = g++
+# Set Load flags to include SDL
+LDFLAGS = -lSOIL -lopengl32 -lglu32  -lfreeglut -lfreetype -lws2_32
+COMPW = -lstdc++
+# Set target
+EXE = openGLSSVEP.exe
+FREETYPE_INCLUDE = c:\MinGW\include\freetype
 else
 # Set compiler to g++
 CXX = g++

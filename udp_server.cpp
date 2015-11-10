@@ -6,6 +6,8 @@
 #include <sys/fcntl.h> // for non-blocking
 #endif
 
+#include <stdio.h>
+
 class udp_server_runtime_error : public std::runtime_error
 {
 public:
