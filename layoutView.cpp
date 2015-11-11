@@ -1,7 +1,6 @@
 #include "layoutView.h"
 #include <stdio.h>
 
-
 #include <math.h>
 
 // Initiate layout memory
@@ -32,6 +31,37 @@ void layoutView::getPos(GLfloat * V2Pos, GLfloat R, GLfloat angle, GLfloat SizeX
 	
     return;
 }
+// Name and Links
+void layoutView::setName(const char args[25]){
+	_Name = std::string(args);
+	//std::copy(Angles, Angles+_NBlocks, _Angles);
+}
+void layoutView::setLinksName(const char args[][25]){
+	for (unsigned int i=0;i<_NBlocks;i++){
+		_linksName.push_back(args[i]);
+	}
+}
+std::string layoutView::getLinkName(int Key){
+	if ((Key>=0) and (Key<_NBlocks))
+		return _linksName[Key];
+	else return std::string("");
+}
+bool layoutView::is(const char args[25]){
+	return (_Name.compare(std::string(args)) == 0);
+	//std::copy(Angles, Angles+_NBlocks, _Angles);
+}
+//
+void layoutView::addText(std::string str, GLfloat X, GLfloat Y, GLfloat Scale,const GLfloat *color){
+	_textList.push_back(new textObj());
+	_textList.back()->_Text = str;
+	_textList.back()->_X = X;
+	_textList.back()->_Y = Y;
+	_textList.back()->_Scale = Scale;
+	std::copy(color,color + 2, _textList.back()->_Color);
+}
+
+
+
 // Copy Angles to Object
 void layoutView::setAngles(const GLfloat *Angles){
 	std::copy(Angles, Angles+_NBlocks, _Angles);
@@ -75,17 +105,35 @@ void layoutView::initObjects(){
     }
 }
 // Draw object to screen
-void layoutView::Draw(){
+void layoutView::Draw(int selected){
 	glColor3f(1.0f,1.0f,1.0f);
 	glPushMatrix();
-    for (unsigned int i=0;i<oList.size();i++){
-		//Object display fucntion
+	if ((selected>=0) && (selected<oList.size())) {
 		if (DRAWWITHPICTURES) {
-			oList[i]->DrawWithImage();
+			oList[selected]->DrawWithImage(false);
 		} else {
-			glCallList(oList[i]->glDraw());
+			glCallList(oList[selected]->glDraw());
 		}
-    }
+	}else{
+		for (unsigned int i=0;i<oList.size();i++){
+			//Object display fucntion
+			if (DRAWWITHPICTURES) {
+				oList[i]->DrawWithImage(true);
+			} else {
+				glCallList(oList[i]->glDraw());
+			}
+		}
+	}
+	
+	for (unsigned int i=0;i<_textList.size();i++){
+		glPushMatrix();
+		glLoadIdentity();
+		glColor3f(1.0f,0.0f,0.0f);
+		glScalef(_textList[i]->_Scale,_textList[i]->_Scale,1);
+		freetype::print(*our_font, _textList[i]->_X, _textList[i]->_Y, "%s", _textList[i]->_Text.c_str());
+		glPopMatrix();
+	}
+	
 	glPopMatrix();
 }
 // Set Images 

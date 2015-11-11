@@ -106,8 +106,8 @@ void SSVEPObject::setFrequency(float freq){
         FrameCount2=7;
         break;
     default:
-        FrameCount1=1;
-        FrameCount2=1;
+        FrameCount1=7;
+        FrameCount2=7;
         break;
     }
     FrameCount=0;
@@ -138,7 +138,7 @@ GLint SSVEPObject::glDraw(){
     }
 }
 
-void SSVEPObject::DrawWithImage(){
+void SSVEPObject::DrawWithImage(bool blink){
 	
 	float FreqAverage=1;
     int count = (LastColor==0)?FrameCount1:FrameCount2;
@@ -156,12 +156,15 @@ void SSVEPObject::DrawWithImage(){
 	    //}
         }
     }
-	
-    if (LastColor==0) {
-        glBindTexture(GL_TEXTURE_2D, texture[0]);   // choose the texture to use.	
-    }else {
-        glBindTexture(GL_TEXTURE_2D, texture[1]);   // choose the texture to use.	
-    }
+	if (blink){
+		if (LastColor==0) {
+			glBindTexture(GL_TEXTURE_2D, texture[0]);   // choose the texture to use.	
+		}else {
+			glBindTexture(GL_TEXTURE_2D, texture[1]);   // choose the texture to use.	
+		}
+	}else {
+		glBindTexture(GL_TEXTURE_2D, texture[0]);   // choose the texture to use.	
+	}
 	
 	
 	glBegin(GL_QUADS);		                // begin drawing a cube

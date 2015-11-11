@@ -29,6 +29,7 @@
 
 #include "FreeType.h"
 freetype::font_data our_font;
+freetype::font_data our_fontBig;
 
 int DRAWWITHPICTURES=1;
 int DRAWFREQ=0;
@@ -44,8 +45,10 @@ char *UDP_BUFFER = new char[100];
 // Start UDP Server
 udp_server *UDP;
 // feedback aux
+#define FEEDBACK_TIMER 1.5*60
 int feedback_box=0;
 int feedback_box_count=0;
+int selected = -1;
 
 
 //Templete for Size
@@ -55,6 +58,16 @@ size_t size(T (&)[N]) { return N; }
 // Layouts List
 std::vector<layoutView*> layoutList;
 		
+// current layout
+unsigned int curr_layout = 0; 
+
+
+void setLayout(std::string Name){
+	for (int i=0;i<layoutList.size();i++){
+		if (layoutList[i]->is(Name.c_str()))
+			curr_layout=i;
+	}
+}
 
 //-------------------------------------------------------------------------
 //  Set OpenGL program initial state.
@@ -71,21 +84,56 @@ void init ()
     glLoadIdentity();				// Reset The Projection Matrix
     glMatrixMode(GL_MODELVIEW);
 	
+	our_font.init("Test.ttf", 16);
+	our_fontBig.init("Test.ttf", 30);
+	
+	//Create Layout 0 
+	//Nurse Call
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"Nurse"});
+	layoutList.back()->setLinksName((const char[][25]){{"0"},{"index"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"NurseButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"NurseButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	layoutList.back()->initObjects();
+	//Sleep Mode
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"SleepMode"});
+	layoutList.back()->setLinksName((const char[][25]){{"0"},{"index"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"SleepModeButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"SleepModeButton.png"}});
+	layoutList.back()->initObjects();
+	
 	//Create Layout 1
 	layoutList.push_back(new layoutView(8));
+	layoutList.back()->setName((const char[25]){"index"});
+	layoutList.back()->setLinksName((const char[][25]){{"Nurse"},{"Speller"},
+		{"Yes"},{"CommonNeeds"},{"SleepMode"},{"MediaControl"},
+		{"No"},{"MedicalNeeds"}});
 	layoutList.back()->setAngles((const GLfloat[]){0,38,90,142,180,218,270,322});
 	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
 	layoutList.back()->setR((const GLfloat[]){0.7,0.75,0.8,0.75,0.7,0.75,0.8,0.75});
 	layoutList.back()->setFrequencies((const float []){10,4.6,5.4,6.6,8.5,5,6,7.5});
+	//layoutList.back()->setFrequencies((const float []){4.2,4.6,5,5.4,6,6.6,7.5,8.5});
 	layoutList.back()->setImages((const char[][25]){{"NurseButton.png"},{"SpellerButton.png"},
-		{"NoButton.png"},{"CommonNeedsButton.png"},{"SleepModeButton.png"},{"MediaControlButton.png"},
-		{"YesButton.png"},{"MedicalNeedsButton.png"}});
+		{"YesButton.png"},{"CommonNeedsButton.png"},{"SleepModeButton.png"},{"MediaControlButton.png"},
+		{"NoButton.png"},{"MedicalNeedsButton.png"}});
 	layoutList.back()->setImagesN((const char[][25]){{"NurseButtonN.png"},{"SpellerButtonN.png"},
-		{"NoButtonN.png"},{"CommonNeedsButtonN.png"},{"SleepModeButtonN.png"},{"MediaControlButtonN.png"},
-		{"YesButtonN.png"},{"MedicalNeedsButtonN.png"}});
+		{"YesButtonN.png"},{"CommonNeedsButtonN.png"},{"SleepModeButtonN.png"},{"MediaControlButtonN.png"},
+		{"NoButtonN.png"},{"MedicalNeedsButtonN.png"}});
 	layoutList.back()->initObjects();
-	our_font.init("Test.ttf", 16);
-    
+	
 }
 
 /* Here goes our drawing code */
@@ -94,7 +142,7 @@ int drawFeedback( int BOX, float posx, float posy, float scale )
 	glPushMatrix();
 	glLoadIdentity();
 	glScalef(scale,scale,1);
-	freetype::print(our_font, posx, posy, "%d", BOX);
+	freetype::print(our_fontBig, posx, posy, "%d", BOX);
 	glPopMatrix();
     return( 1 );
 }
@@ -112,7 +160,7 @@ void display (void)
 	
 	
 	// Draw Objects in the list
-    drawObject();
+    drawObject(selected);
 	
 	//Clear texture to write text
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -130,15 +178,20 @@ void display (void)
 	}
 	
 	if (UDP->HAS_DATA()){
-		feedback_box_count=120;
+		feedback_box_count=FEEDBACK_TIMER;
 		feedback_box = std::atoi(UDP_BUFFER);
+		selected = feedback_box-1;
 	}
 	
 	if (feedback_box_count>0){
 		//Set Color to Red
 		glColor3f(1.0f,0.0f,0.0f); 
-		drawFeedback(feedback_box,-.1,0.0,8);
+		drawFeedback(feedback_box,-.1,0.0,3);
 		feedback_box_count--;
+		if (feedback_box_count==0){
+			setLayout( layoutList[curr_layout]->getLinkName(selected));
+			selected = -1;
+		}
 	}
     
 	//Display frequency for each object
@@ -157,9 +210,9 @@ void display (void)
 //-------------------------------------------------------------------------
 //  Draws the object
 //-------------------------------------------------------------------------
-void drawObject()
+void drawObject(int selected)
 {
-	layoutList.back()->Draw();
+	layoutList[curr_layout]->Draw(selected);
 }
 
 //-------------------------------------------------------------------------
@@ -275,10 +328,16 @@ static void Key(unsigned char key, int x, int y)
 
     switch (key) {
 		case '1':
-			//changeLayout(0);
-		break;
 		case '2':
-			//changeLayout(1);
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+			feedback_box_count=FEEDBACK_TIMER;
+			feedback_box = (int)key-48;
+			selected = feedback_box-1;
 		break;
 		case '0':
 			if (full_screen){
@@ -328,7 +387,6 @@ int main (int argc, char **argv)
     //  Set Display mode
     glutInitDisplayMode (GLUT_DEPTH | GLUT_RGBA | GLUT_ALPHA | GLUT_DOUBLE | GLUT_ACCUM);
 
-
     //  Create window with the specified title
     glutCreateWindow (window_title);
 
@@ -354,7 +412,9 @@ int main (int argc, char **argv)
     glutIdleFunc (idle);
 	
 	//Init UDP
-	 UDP = new udp_server("127.0.0.1", 1050);
+	UDP = new udp_server("127.0.0.1", 1050);
+	
+	setLayout("index");
 	
     //  Start GLUT event processing loop
     glutMainLoop();

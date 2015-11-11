@@ -36,6 +36,8 @@
     <File Name="udp_server.cpp"/>
     <File Name="FreeType.cpp"/>
     <File Name="FreeType.h"/>
+    <File Name="textObj.h"/>
+    <File Name="textObj.cpp"/>
   </VirtualDirectory>
   <Settings Type="Dynamic Library">
     <GlobalSettings>

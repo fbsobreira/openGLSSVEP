@@ -50,7 +50,7 @@ int currentTime = 0, previousTime = 0;
 
 // Methods
 void animateObject();
-void drawObject();
+void drawObject(int selected);
 void calculateFPS();
 void drawFPS();
 void drawCLOCK();

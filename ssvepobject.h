@@ -47,7 +47,7 @@ public:
 	
 	void LoadGLTextures();
 	
-	void DrawWithImage();
+	void DrawWithImage(bool blink);
 	
 
 //signals:
