@@ -61,9 +61,12 @@ std::vector<layoutView*> layoutList;
 // current layout
 unsigned int curr_layout = 0; 
 
+bool calibration_mode = false;
+int calibration_freq = 0;
+
 
 void setLayout(std::string Name){
-	for (int i=0;i<layoutList.size();i++){
+	for (unsigned int i=0;i<layoutList.size();i++){
 		if (layoutList[i]->is(Name.c_str()))
 			curr_layout=i;
 	}
@@ -102,7 +105,7 @@ void init ()
 	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
 	layoutList.back()->our_font = &our_fontBig;
 	
-	layoutList.back()->initObjects();
+	
 	//Sleep Mode
 	layoutList.push_back(new layoutView(3));
 	layoutList.back()->setName((const char[25]){"SleepMode"});
@@ -113,7 +116,7 @@ void init ()
 	layoutList.back()->setFrequencies((const float []){5.4,6,0});
 	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"SleepModeButton.png"}});
 	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"SleepModeButton.png"}});
-	layoutList.back()->initObjects();
+	
 	
 	//Create Layout 1
 	layoutList.push_back(new layoutView(8));
@@ -132,7 +135,11 @@ void init ()
 	layoutList.back()->setImagesN((const char[][25]){{"NurseButtonN.png"},{"SpellerButtonN.png"},
 		{"YesButtonN.png"},{"CommonNeedsButtonN.png"},{"SleepModeButtonN.png"},{"MediaControlButtonN.png"},
 		{"NoButtonN.png"},{"MedicalNeedsButtonN.png"}});
-	layoutList.back()->initObjects();
+		
+	
+	// Init objects
+	for (unsigned int i=0;i<layoutList.size();i++)
+		layoutList[i]->initObjects();
 	
 }
 
@@ -160,11 +167,12 @@ void display (void)
 	
 	
 	// Draw Objects in the list
-    drawObject(selected);
-	
+	if (calibration_mode)
+		drawObject(calibration_freq, true);
+	else
+		drawObject(selected, false); 
 	//Clear texture to write text
 	glBindTexture(GL_TEXTURE_2D, 0);
-	
 	// Disaplay update frequency 
 	if (DRAWFPS){
 		//Set Color to Red
@@ -175,14 +183,7 @@ void display (void)
 		//Set Color to White
 		glColor3f(1.0f,1.0f,1.0f); 
 		drawCLOCK();
-	}
-	
-	if (UDP->HAS_DATA()){
-		feedback_box_count=FEEDBACK_TIMER;
-		feedback_box = std::atoi(UDP_BUFFER);
-		selected = feedback_box-1;
-	}
-	
+	}	
 	if (feedback_box_count>0){
 		//Set Color to Red
 		glColor3f(1.0f,0.0f,0.0f); 
@@ -210,9 +211,9 @@ void display (void)
 //-------------------------------------------------------------------------
 //  Draws the object
 //-------------------------------------------------------------------------
-void drawObject(int selected)
+void drawObject(int selected, bool blink)
 {
-	layoutList[curr_layout]->Draw(selected);
+	layoutList[curr_layout]->Draw(selected, blink);
 }
 
 //-------------------------------------------------------------------------
@@ -237,7 +238,6 @@ void drawCLOCK()
 	system_clock::time_point today = system_clock::now();
 	std::time_t tt;
 	tt = system_clock::to_time_t ( today );
-
 
 	glPushMatrix();
  	glLoadIdentity ();
@@ -268,7 +268,9 @@ void idle (void)
 		//UDP_BUFFER[rec]=0;
 		printf("T:%d: %.*s\n",rec,rec, UDP_BUFFER);
 	}
-	
+	if (UDP->HAS_DATA()){
+		exec(UDP_BUFFER[0]);
+	}
 
     //  Call display function (draw the current frame)
     glutPostRedisplay ();
@@ -335,9 +337,7 @@ static void Key(unsigned char key, int x, int y)
 		case '6':
 		case '7':
 		case '8':
-			feedback_box_count=FEEDBACK_TIMER;
-			feedback_box = (int)key-48;
-			selected = feedback_box-1;
+			exec(key);
 		break;
 		case '0':
 			if (full_screen){
@@ -350,6 +350,13 @@ static void Key(unsigned char key, int x, int y)
 			}
 			
 		break;
+		//Training Mode
+		case 'C':
+			exec('C');
+		break;
+		case 'R':
+			exec('R');
+		break;
 		case 27:
 			//glutLeaveMainLoop();
 			glutExit();
@@ -358,6 +365,27 @@ static void Key(unsigned char key, int x, int y)
 	// RE-Display
     glutPostRedisplay();
 }
+
+
+void exec(char code){
+	if (code=='C') {
+		calibration_mode = true;
+	}else if (code=='R') {
+		calibration_mode = false;
+	}else {
+		if (calibration_mode){
+			code = std::atoi(&code);
+			calibration_freq = code-1;
+		}
+		else {
+			code = std::atoi(&code);
+			feedback_box_count=FEEDBACK_TIMER;
+			feedback_box = code;
+			selected = feedback_box-1;
+		}
+	}
+}
+
 //-------------------------------------------------------------------------
 //  Program Main method.
 //-------------------------------------------------------------------------

@@ -105,12 +105,12 @@ void layoutView::initObjects(){
     }
 }
 // Draw object to screen
-void layoutView::Draw(int selected){
+void layoutView::Draw(int selected, bool blink){
 	glColor3f(1.0f,1.0f,1.0f);
 	glPushMatrix();
 	if ((selected>=0) && (selected<oList.size())) {
 		if (DRAWWITHPICTURES) {
-			oList[selected]->DrawWithImage(false);
+			oList[selected]->DrawWithImage(blink);
 		} else {
 			glCallList(oList[selected]->glDraw());
 		}

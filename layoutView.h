@@ -64,7 +64,7 @@ public:
 	
 	void initObjects();
 	
-	void Draw(int slected);
+	void Draw(int slected, bool blink);
 	
 	void addText(std::string str, float X, float Y, float Scale,const GLfloat *color);
 	
