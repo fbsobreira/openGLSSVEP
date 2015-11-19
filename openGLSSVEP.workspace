@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CodeLite_Workspace Name="openGLSSVEP" Database="" SWTLW="No">
   <Project Name="openGLSSVEP" Path="openGLSSVEP.project" Active="Yes"/>
+  <Project Name="SView" Path="SView/SView.project"/>
   <BuildMatrix>
     <WorkspaceConfiguration Name="Debug" Selected="yes">
       <Project Name="openGLSSVEP" ConfigName="Debug"/>
+      <Project Name="SView" ConfigName="Debug"/>
     </WorkspaceConfiguration>
     <WorkspaceConfiguration Name="Release" Selected="yes">
       <Project Name="openGLSSVEP" ConfigName="Release"/>
+      <Project Name="SView" ConfigName="Release"/>
     </WorkspaceConfiguration>
   </BuildMatrix>
 </CodeLite_Workspace>

@@ -7,9 +7,9 @@
 	#include <netdb.h>
 #else
 	#include <winsock2.h>
-	#define _WIN32_WINNT 0x501
+	//#define _WIN32_WINNT 0x501
 	#include <ws2tcpip.h>
-	//#include <windows.h>      // Needed for all Winsock stuff
+	#include <windows.h>      // Needed for all Winsock stuff
 #endif
 #include <stdexcept>
 

@@ -1,6 +1,7 @@
 #include "layoutView.h"
 #include <stdio.h>
-
+#include <dirent.h>
+#include <algorithm>
 #include <math.h>
 
 // Initiate layout memory
@@ -103,6 +104,25 @@ void layoutView::initObjects(){
 		//Iniciate Object
         oList[i]->initObject();
     }
+	
+	if (_Directory.length()>0){
+		selectedFile = 0;
+		DIR *dir;
+		struct dirent *ent;
+		if ((dir = opendir (_Directory.c_str())) != NULL) {
+		  /* print all the files and directories within directory */
+		  while ((ent = readdir (dir)) != NULL) {
+			  char *point;
+			  if((point = strrchr(ent->d_name,'.')) != NULL ) {
+				 if(strcmp(point,_Extension.c_str()) == 0) {
+					_listOfFiles.push_back(ent->d_name);
+				  }
+			  }
+		  }
+		  sort(_listOfFiles.begin(), _listOfFiles.end());
+		  closedir (dir);
+		}
+	}
 }
 // Draw object to screen
 void layoutView::Draw(int selected, bool blink){
@@ -134,6 +154,32 @@ void layoutView::Draw(int selected, bool blink){
 		glPopMatrix();
 	}
 	
+	//List Files
+	glPushMatrix();
+	glLoadIdentity();
+	int listPos=0;
+	if (selectedFile>=maxFiles){
+		listPos = selectedFile-maxFiles+1;
+	}
+	int listEnd = _listOfFiles.size();
+	if (listEnd>maxFiles) {
+		if (selectedFile>=maxFiles){
+			listEnd = selectedFile-1;
+		}
+	}
+	for (unsigned int i=listPos;i<listEnd;i++){
+		if (i==selectedFile)
+			glColor3f(1.0f,0.0f,0.0f);
+		else
+			glColor3f(1.0f,1.0f,1.0f);
+		
+		float posY = filesY-freetype::fontSize(*listFont)*(i-listPos);
+		glScalef(1,1,1);
+		freetype::print(*listFont, filesX, posY, "%s", _listOfFiles[i].c_str());
+	}
+	glPopMatrix();
+	
+	
 	glPopMatrix();
 }
 // Set Images 
@@ -147,4 +193,20 @@ void layoutView::setImagesN(const char args[][25]){
 	for (unsigned int i=0;i<_NBlocks;i++){
 		_imageListN.push_back(args[i]);
 	}
+}
+
+void layoutView::showListFrom(const char args[25], const char extension[5], int maxFiles, float X, float Y){
+	_Directory = std::string(args);
+	_Extension = std::string(extension);
+	
+	this->maxFiles = maxFiles;
+	filesX = X;
+	filesY = Y;
+}
+void layoutView::listUP(){
+	if (selectedFile>0) selectedFile--;
+}
+void layoutView::listDOWN(){
+	if (selectedFile<(_listOfFiles.size()-1))
+		selectedFile ++;
 }

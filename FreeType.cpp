@@ -3,10 +3,11 @@
 	and distributed as part of a tutorial for nehe.gamedev.net.
 	Sven Olsen, 2003
 */
-
-
 //Include our header file.
 #include "FreeType.h"
+
+extern int window_width;
+extern int window_height;
 
 namespace freetype {
 
@@ -206,6 +207,11 @@ inline void pop_projection_matrix() {
 	glPopAttrib();
 }
 
+float fontSize(const font_data &ft_font)  {
+	return ((ft_font.h/.63f)+10)/window_height;	
+}
+
+
 ///Much like Nehe's glPrint function, but modified to work
 ///with freetype fonts.
 void print(const font_data &ft_font, float x, float y, const char *fmt, ...)  {
@@ -216,6 +222,9 @@ void print(const font_data &ft_font, float x, float y, const char *fmt, ...)  {
 	int W = m_viewport[2]-m_viewport[0];
 	int H = m_viewport[3]-m_viewport[1];
 
+	W = window_width;
+	H = window_height;
+	
 	x= (float)W/2+(float)W/2*x;
 	y= (float)H/2+((float)H/2)*y;
 	// We want a coordinate system where things coresponding to window pixels.

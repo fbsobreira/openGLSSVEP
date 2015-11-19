@@ -21,14 +21,6 @@ int _vscprintf (const char * format, va_list pargs) {
 #endif
 
 
-int screenWindow_x;
-int screenWindow_y;
-
-//  variables representing the window size
-int window_width;
-int window_height;
-
-
 //  Pointer to a font style..
 //  Fonts supported by GLUT are: GLUT_BITMAP_8_BY_13,
 //  GLUT_BITMAP_9_BY_15, GLUT_BITMAP_TIMES_ROMAN_10,

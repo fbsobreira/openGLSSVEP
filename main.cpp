@@ -1,4 +1,3 @@
-
 //*************************************************************************
 //
 //  Project     : BME897 - SSVEP
@@ -23,9 +22,10 @@
 
 #include <chrono>
 #include "udp_server.h" // For UDPSocket and SocketException
+#include "udp_client.h" 
 #include <iostream>          // For cout and cerr
 #include <cstdlib>           // For atoi()
-
+#include <unistd.h>
 
 #include "FreeType.h"
 freetype::font_data our_font;
@@ -40,10 +40,19 @@ int DRAWCLOCK=1;
 int SCREEN_SIZE_X=1600;
 int SCREEN_SIZE_Y=900;
 
+int screenWindow_x;
+int screenWindow_y;
+
+//  variables representing the window size
+int window_width;
+int window_height;
+
+
 //UDP Buffer
 char *UDP_BUFFER = new char[100];
 // Start UDP Server
 udp_server *UDP;
+udp_client *UDPClient;
 // feedback aux
 #define FEEDBACK_TIMER 1.5*60
 int feedback_box=0;
@@ -91,34 +100,6 @@ void init ()
 	our_fontBig.init("Test.ttf", 30);
 	
 	//Create Layout 0 
-	//Nurse Call
-	layoutList.push_back(new layoutView(3));
-	layoutList.back()->setName((const char[25]){"Nurse"});
-	layoutList.back()->setLinksName((const char[][25]){{"0"},{"index"},{"0"}});
-	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
-	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
-	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
-	layoutList.back()->setFrequencies((const float []){5.4,6,0});
-	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"NurseButton.png"}});
-	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"NurseButton.png"}});
-	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
-	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
-	layoutList.back()->our_font = &our_fontBig;
-	
-	
-	//Sleep Mode
-	layoutList.push_back(new layoutView(3));
-	layoutList.back()->setName((const char[25]){"SleepMode"});
-	layoutList.back()->setLinksName((const char[][25]){{"0"},{"index"},{"0"}});
-	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
-	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
-	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
-	layoutList.back()->setFrequencies((const float []){5.4,6,0});
-	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"SleepModeButton.png"}});
-	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"SleepModeButton.png"}});
-	
-	
-	//Create Layout 1
 	layoutList.push_back(new layoutView(8));
 	layoutList.back()->setName((const char[25]){"index"});
 	layoutList.back()->setLinksName((const char[][25]){{"Nurse"},{"Speller"},
@@ -136,6 +117,286 @@ void init ()
 		{"YesButtonN.png"},{"CommonNeedsButtonN.png"},{"SleepModeButtonN.png"},{"MediaControlButtonN.png"},
 		{"NoButtonN.png"},{"MedicalNeedsButtonN.png"}});
 		
+	
+	//Speller
+	layoutList.push_back(new layoutView(8));
+	layoutList.back()->setName((const char[25]){"Speller"});
+	layoutList.back()->setLinksName((const char[][25]){{"9-@"},{"backspace"},
+		{"index"},{"a-g"},{"h-n"},{"o-u"},
+		{"v-1"},{"2-8"}});
+	layoutList.back()->setAngles((const GLfloat[]){0,38,90,142,180,218,270,322});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.7,0.75,0.8,0.75,0.7,0.75,0.8,0.75});
+	layoutList.back()->setFrequencies((const float []){10,4.6,5.4,6.6,8.5,5,6,7.5});
+	layoutList.back()->setImages((const char[][25]){{"9-@Button.png"},{"BackspaceButon.png"},
+		{"BackButton.png"},{"A-GButton.png"},{"H-NButton.png"},{"O-UButton.png"},
+		{"V-1Button.png"},{"2-8Button.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"9-@ButtonN.png"},{"BackspaceButonN.png"},
+		{"BackButtonN.png"},{"A-GButtonN.png"},{"H-NButtonN.png"},{"O-UButtonN.png"},
+		{"V-1ButtonN.png"},{"2-8ButtonN.png"}});
+		
+	//Nurse Call
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"Nurse"});
+	layoutList.back()->setLinksName((const char[][25]){{"0"},{"index"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"NurseButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"NurseButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	//Common Needs
+	layoutList.push_back(new layoutView(8));
+	layoutList.back()->setName((const char[25]){"CommonNeeds"});
+	layoutList.back()->setLinksName((const char[][25]){{"Hunger"},{"Template"},
+		{"index"},{"Bedding"},{"RoomBrightness"},{"Bathroom"},
+		{"FreshAir"},{"Thirst"}});
+	layoutList.back()->setAngles((const GLfloat[]){0,38,90,142,180,218,270,322});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.7,0.75,0.8,0.75,0.7,0.75,0.8,0.75});
+	layoutList.back()->setFrequencies((const float []){10,4.6,5.4,6.6,8.5,5,6,7.5});
+	layoutList.back()->setImages((const char[][25]){{"HungerButton.png"},{"TemplateButton.png"},
+		{"BackButton.png"},{"BeddingButton.png"},{"RoomBriButton.png"},{"BathroomButton.png"},
+		{"FreshAirButton.png"},{"ThirstButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"HungerButtonN.png"},{"TemplateButtonN.png"},
+		{"BackButtonN.png"},{"BeddingButtonN.png"},{"RoomBriButtonN.png"},{"BathroomButtonN.png"},
+		{"FreshAirButtonN.png"},{"ThirstButtonN.png"}});
+		
+	
+	//Thirst Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"Thirst"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"CommonNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"ThirstButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"ThirstButtons.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	//FreshAir Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"FreshAir"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"CommonNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"FreshAirButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"FreshAirButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	//Bathroom Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"Bathroom"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"CommonNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"BathroomButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"BathroomButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	//RoomBrightness Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"RoomBrightness"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"CommonNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"RoomBriButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"RoomBriButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	//Bedding Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"Bedding"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"CommonNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"BeddingButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"BeddingButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	//Hunger Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"Hunger"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"CommonNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"HungerButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"HungerButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+		
+	//Medical Needs
+	layoutList.push_back(new layoutView(8));
+	layoutList.back()->setName((const char[25]){"MedicalNeeds"});
+	layoutList.back()->setLinksName((const char[][25]){{"Uncomfortable"},{"Itching"},
+		{"index"},{"BreathingProblems"},{"Pain"},{"Template"},
+		{"SalivaProblems"},{"Headache"}});
+	layoutList.back()->setAngles((const GLfloat[]){0,38,90,142,180,218,270,322});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.7,0.75,0.8,0.75,0.7,0.75,0.8,0.75});
+	layoutList.back()->setFrequencies((const float []){10,4.6,5.4,6.6,8.5,5,6,7.5});
+	layoutList.back()->setImages((const char[][25]){{"UncomfortableButton.png"},{"ItchingButton.png"},
+		{"BackButton.png"},{"BreathingProButton.png"},{"PainButton.png"},{"TemplateButton.png"},
+		{"SalivaProButton.png"},{"HeadacheButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"UncomfortableButtonN.png"},{"ItchingButtonN.png"},
+		{"BackButtonN.png"},{"BreathingProButtonN.png"},{"PainButtonN.png"},{"TemplateButtonN.png"},
+		{"SalivaProButtonN.png"},{"HeadacheButtonN.png"}});
+	
+	
+	//Headache Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"Headache"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"MedicalNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"HeadacheButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"HeadacheButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+
+	//SalivaProblems Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"SalivaProblems"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"MedicalNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"SalivaProButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"SalivaProButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	//Pain Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"Pain"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"MedicalNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"PainButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"PainButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	//BreathingProblems Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"BreathingProblems"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"MedicalNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"BreathingProButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"BreathingProButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	//Itching Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"Itching"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"MedicalNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"ItchingButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"ItchingButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	//Uncomfortable Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"Uncomfortable"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"},{"MedicalNeeds"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"UncomfortableButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"UncomfortableButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	//Sleep Mode Confirm
+	layoutList.push_back(new layoutView(3));
+	layoutList.back()->setName((const char[25]){"SleepMode"});
+	layoutList.back()->setLinksName((const char[][25]){{"SleepModeIn"},{"index"},{"0"}});
+	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
+	layoutList.back()->setFrequencies((const float []){5.4,6,0});
+	layoutList.back()->setImages((const char[][25]){{"YesButton.png"},{"NoButton.png"},{"SleepModeButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"YesButtonN.png"},{"NoButtonN.png"},{"SleepModeButton.png"}});
+	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	
+	//Sleep Mode
+	layoutList.push_back(new layoutView(1));
+	layoutList.back()->setName((const char[25]){"SleepModeIn"});
+	layoutList.back()->setLinksName((const char[][25]){{"index"}});
+	layoutList.back()->setAngles((const GLfloat[]){180});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.8,});
+	layoutList.back()->setFrequencies((const float []){6});
+	layoutList.back()->setImages((const char[][25]){{"SleepModeButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"SleepModeButtonN.png"}});
+	
+	
+	//Media Control
+	layoutList.push_back(new layoutView(4));
+	layoutList.back()->setName((const char[25]){"MediaControl"});
+	layoutList.back()->setLinksName((const char[][25]){{"_ListUP"},{"index"},
+		{"_ListDOWN"},{"Select"}});
+	layoutList.back()->setAngles((const GLfloat[]){0,90,180,270});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.7,0.8,0.7,0.8});
+	layoutList.back()->setFrequencies((const float []){4.6,5.4,6.6,8.5});
+	layoutList.back()->setImages((const char[][25]){{"UpButton.png"},{"BackButton.png"},
+		{"DownButton.png"},{"SelectButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"UpButtonN.png"},{"BackButtonN.png"},
+		{"DownButtonN.png"},{"SelectButtonN.png"}});
+	layoutList.back()->addText((std::string)"Media Control",-.7,0.4,1,(const GLfloat[]){1,0,0});
+	layoutList.back()->our_font = &our_fontBig;
+	layoutList.back()->showListFrom((const char[25]){"media/movies/"},(const char[5]){".avi"},10,-.2,.2);
+	layoutList.back()->listFont = &our_font;
 	
 	// Init objects
 	for (unsigned int i=0;i<layoutList.size();i++)
@@ -159,6 +420,8 @@ int drawFeedback( int BOX, float posx, float posy, float scale )
 //-------------------------------------------------------------------------
 void display (void)
 {
+	glutSetWindow( WindowID1 );
+
 	// Clear buffer
     glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
@@ -357,6 +620,9 @@ static void Key(unsigned char key, int x, int y)
 		case 'R':
 			exec('R');
 		break;
+		case 'T':
+			UDPClient->send("Wellcome",8);
+		break;
 		case 27:
 			//glutLeaveMainLoop();
 			glutExit();
@@ -369,6 +635,7 @@ static void Key(unsigned char key, int x, int y)
 
 void exec(char code){
 	if (code=='C') {
+		setLayout("index");
 		calibration_mode = true;
 	}else if (code=='R') {
 		calibration_mode = false;
@@ -379,6 +646,18 @@ void exec(char code){
 		}
 		else {
 			code = std::atoi(&code);
+			if (layoutList[curr_layout]->is("MediaControl")){	
+				selected = code-1;
+				if (strcmp(layoutList[curr_layout]->getLinkName(selected).c_str(),"_ListUP")==0){
+					layoutList[curr_layout]->listUP();
+					selected=-1;
+					return;
+				}else if (strcmp(layoutList[curr_layout]->getLinkName(selected).c_str(),"_ListDOWN")==0){
+					layoutList[curr_layout]->listDOWN();
+					selected=-1;
+					return;
+				}
+			}
 			feedback_box_count=FEEDBACK_TIMER;
 			feedback_box = code;
 			selected = feedback_box-1;
@@ -404,19 +683,15 @@ int main (int argc, char **argv)
 
     //  create a window with the specified dimensions
     glutInitWindowSize (window_width, window_height);
-
     //  Set the window x and y coordinates such that the
     //  window becomes centered
     centerOnScreen ();
-
     //  Position Window
     glutInitWindowPosition (screenWindow_x, screenWindow_y);
-
     //  Set Display mode
     glutInitDisplayMode (GLUT_DEPTH | GLUT_RGBA | GLUT_ALPHA | GLUT_DOUBLE | GLUT_ACCUM);
-
     //  Create window with the specified title
-    glutCreateWindow (window_title);
+    WindowID1=glutCreateWindow (window_title);
 
     //  View in full screen if the full_screen flag is on
     if (full_screen)
@@ -440,12 +715,14 @@ int main (int argc, char **argv)
     glutIdleFunc (idle);
 	
 	//Init UDP
-	UDP = new udp_server("127.0.0.1", 1050);
+	UDP = new udp_server("0.0.0.0", 1050);
+	UDPClient = new udp_client("127.0.0.1", 1051);
 	
 	setLayout("index");
+	//setLayout("MediaControl");
 	
-    //  Start GLUT event processing loop
-    glutMainLoop();
+	//  Start GLUT event processing loop
+	glutMainLoop();
 	
 }
 

@@ -1,46 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CodeLite_Project Name="openGLSSVEP" InternalType="">
-  <Plugins>
-    <Plugin Name="qmake">
-      <![CDATA[00010001N0005Debug000000000000]]>
-    </Plugin>
-    <Plugin Name="CMakePlugin">
-      <![CDATA[[{
-  "name": "Debug",
-  "enabled": false,
-  "buildDirectory": "build",
-  "sourceDirectory": "$(ProjectPath)",
-  "generator": "",
-  "buildType": "",
-  "arguments": [],
-  "parentProject": ""
- }]]]>
-    </Plugin>
-  </Plugins>
+<CodeLite_Project Name="SView" InternalType="">
   <Description/>
   <Dependencies/>
-  <VirtualDirectory Name="openGLSSVEP">
-    <File Name="main.cpp"/>
-    <File Name="glhelper.cpp"/>
-    <File Name="main.h"/>
-    <File Name="wglext.cpp"/>
-    <File Name="ssvepobject.h"/>
-    <File Name="wglext.h"/>
-    <File Name="glxext.h"/>
-    <File Name="ssvepobject.cpp"/>
-    <File Name="glhelper.h"/>
-    <File Name="Makefile"/>
-    <File Name="layoutView.h"/>
-    <File Name="layoutView.cpp"/>
-    <File Name="udp_server.h"/>
-    <File Name="udp_server.cpp"/>
-    <File Name="FreeType.cpp"/>
-    <File Name="FreeType.h"/>
-    <File Name="textObj.h"/>
-    <File Name="textObj.cpp"/>
-    <File Name="udp_client.h"/>
-    <File Name="udp_client.cpp"/>
-  </VirtualDirectory>
   <Settings Type="Dynamic Library">
     <GlobalSettings>
       <Compiler Options="" C_Options="" Assembler="">
@@ -57,7 +18,7 @@
       </Compiler>
       <Linker Options="" Required="yes"/>
       <ResourceCompiler Options="" Required="no"/>
-      <General OutputFile="openGLSSVEP" IntermediateDirectory="./Debug" Command="openGLSSVEP" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="yes" IsEnabled="yes"/>
+      <General OutputFile="" IntermediateDirectory="./Debug" Command="" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(IntermediateDirectory)" PauseExecWhenProcTerminates="yes" IsGUIProgram="no" IsEnabled="yes"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
       </Environment>
@@ -128,6 +89,8 @@
       </Completion>
     </Configuration>
   </Settings>
-  <Dependencies Name="Debug"/>
-  <Dependencies Name="Release"/>
+  <VirtualDirectory Name="src">
+    <File Name="main.cpp"/>
+    <File Name="Makefile"/>
+  </VirtualDirectory>
 </CodeLite_Project>

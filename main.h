@@ -17,8 +17,6 @@ bool WGLExtensionSupported(const char *extension_name);
 #endif
 
 
-
-
 bool InitVSync();
 
 //  Initialization
@@ -30,13 +28,14 @@ void display (void);
 void reshape (int w, int h);
 void idle (void);
 
-
+// Windows ID
+GLint WindowID1;
 //  variable representing the window title
 char *window_title = (char*)"Project: BME897 - SSVEP";
 
 //  Tells whether to display the window full screen or not
 //  Press Alt + Esc to exit a full screen.
-int full_screen = 0;
+int full_screen = 1;
 
 
 //  The number of frames

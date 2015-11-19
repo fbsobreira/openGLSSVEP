@@ -41,6 +41,14 @@ private:
 	//List of SSVEP objects
 	std::vector<SSVEPObject*> oList;
 	
+	std::string _Directory;
+	std::string _Extension;
+	int selectedFile;
+	int maxFiles;
+	float filesX;
+	float filesY;
+	std::vector<std::string> _listOfFiles;
+	
 public:
 	layoutView(unsigned int NBlocks);
 	~layoutView();
@@ -67,6 +75,11 @@ public:
 	void Draw(int slected, bool blink);
 	
 	void addText(std::string str, float X, float Y, float Scale,const GLfloat *color);
+	
+	void listUP();
+	void listDOWN();
+	void showListFrom(const char args[25], const char extension[5], int maxFiles, float X, float Y);
+	freetype::font_data *listFont;
 	
 	freetype::font_data *our_font;
 
