@@ -32,7 +32,7 @@ freetype::font_data our_fontBig;
 PFNGLXSWAPINTERVALEXTPROC       glXSwapInterval = NULL;
 #else
 //#include <GL/glxew.h>
-#include "wglext.h"	
+#include "../wglext.h"	
 extern PFNWGLSWAPINTERVALEXTPROC       wglSwapIntervalEXT;
 extern PFNWGLGETSWAPINTERVALEXTPROC    wglGetSwapIntervalEXT;
 bool WGLExtensionSupported(const char *extension_name);

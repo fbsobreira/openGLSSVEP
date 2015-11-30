@@ -32,7 +32,7 @@ endif
 # Set comilation flags to include SDL
 CPPFLAGS = -std=gnu++11 -Wall -I$(FREETYPE_INCLUDE)
 # load all .cpp files in directory
-SOURCES = $(wildcard *.cpp) ../FreeType.cpp ../udp_server.cpp
+SOURCES = $(wildcard *.cpp) ../FreeType.cpp ../udp_server.cpp ../wglext.cpp
 
 # create object files from source
 OBJECTS = $(SOURCES:.cpp=.o)

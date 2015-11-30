@@ -49,6 +49,8 @@ private:
 	float filesY;
 	std::vector<std::string> _listOfFiles;
 	
+	float freqBase[8] = {10,4.6,5.4,6.6,8.5,5,6,7.5};
+	
 public:
 	layoutView(unsigned int NBlocks);
 	~layoutView();
@@ -69,6 +71,10 @@ public:
 	std::string getLinkName(int Key);
 	bool is(const char args[25]);
 	
+	std::string _linkTimedName;
+	int _linkedTimer=0;
+	void setLinksTimedName(int time, const char args[25]);
+	
 	
 	void initObjects();
 	
@@ -82,6 +88,9 @@ public:
 	freetype::font_data *listFont;
 	
 	freetype::font_data *our_font;
+	
+	
+	int findSelected(int S);
 
 };
 

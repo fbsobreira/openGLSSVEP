@@ -42,7 +42,34 @@ void layoutView::setLinksName(const char args[][25]){
 		_linksName.push_back(args[i]);
 	}
 }
+
+void layoutView::setLinksTimedName(int time, const char args[25]){
+	_linkTimedName = std::string(args);
+	_linkedTimer = time;
+}
+
+int layoutView::findSelected(int S){
+	float f = freqBase[S];
+	for (int i=0;i<_NBlocks;i++){
+		if (_Freq[i]==f){
+			return i;
+		}
+	}
+	return -1;
+}
 std::string layoutView::getLinkName(int Key){
+	/*keu findSelected()
+	printf("Key:%d\n",Key);
+	float f = freqBase[Key];
+	printf("Fre: %f\n",f);
+	for (int i=0;i<_NBlocks;i++){
+		printf("F1: %f, F2: %f\n",_Freq[i],f);
+		if (_Freq[i]==f){
+			return _linksName[i];
+		}
+	}
+	return std::string("");
+	 * */
 	if ((Key>=0) and (Key<_NBlocks))
 		return _linksName[Key];
 	else return std::string("");
@@ -58,7 +85,7 @@ void layoutView::addText(std::string str, GLfloat X, GLfloat Y, GLfloat Scale,co
 	_textList.back()->_X = X;
 	_textList.back()->_Y = Y;
 	_textList.back()->_Scale = Scale;
-	std::copy(color,color + 2, _textList.back()->_Color);
+	std::copy(color,color + 3, _textList.back()->_Color);
 }
 
 
@@ -148,7 +175,9 @@ void layoutView::Draw(int selected, bool blink){
 	for (unsigned int i=0;i<_textList.size();i++){
 		glPushMatrix();
 		glLoadIdentity();
-		glColor3f(1.0f,0.0f,0.0f);
+		//glColor3f(1.0f,0.0f,0.0f);
+		//printf("C:%f,%f,%f\n",_textList[i]->_Color[0],_textList[i]->_Color[1],_textList[i]->_Color[2]);
+		glColor3f(_textList[i]->_Color[0],_textList[i]->_Color[1],_textList[i]->_Color[2]);
 		glScalef(_textList[i]->_Scale,_textList[i]->_Scale,1);
 		freetype::print(*our_font, _textList[i]->_X, _textList[i]->_Y, "%s", _textList[i]->_Text.c_str());
 		glPopMatrix();

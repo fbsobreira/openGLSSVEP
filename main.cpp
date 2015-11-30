@@ -72,6 +72,8 @@ unsigned int curr_layout = 0;
 
 bool calibration_mode = false;
 int calibration_freq = 0;
+bool collect_data = false;
+
 
 
 void setLayout(std::string Name){
@@ -138,7 +140,7 @@ void init ()
 	//Nurse Call
 	layoutList.push_back(new layoutView(3));
 	layoutList.back()->setName((const char[25]){"Nurse"});
-	layoutList.back()->setLinksName((const char[][25]){{"0"},{"index"},{"0"}});
+	layoutList.back()->setLinksName((const char[][25]){{"NurseCalled"},{"index"},{"0"}});
 	layoutList.back()->setAngles((const GLfloat[]){90,270,0});
 	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
 	layoutList.back()->setR((const GLfloat[]){0.8,0.8,0});
@@ -148,6 +150,52 @@ void init ()
 	layoutList.back()->addText((std::string)"You have selected:",-.28,0.3,1,(const GLfloat[]){1,0,0});
 	layoutList.back()->addText((std::string)"Is that correct?",-.22,-0.35,1,(const GLfloat[]){1,0,0});
 	layoutList.back()->our_font = &our_fontBig;
+	
+	//Nurse Called
+	layoutList.push_back(new layoutView(8));
+	layoutList.back()->setName((const char[25]){"NurseCalled"});
+	layoutList.back()->setLinksName((const char[][25]){{"0"},{"Speller"},
+		{"Yes"},{"CommonNeeds"},{"SleepMode"},{"MediaControl"},
+		{"No"},{"MedicalNeeds"}});
+	layoutList.back()->setAngles((const GLfloat[]){0,38,90,142,180,218,270,322});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.7,0.75,0.8,0.75,0.7,0.75,0.8,0.75});
+	layoutList.back()->setFrequencies((const float []){10,4.6,5.4,6.6,8.5,5,6,7.5});
+	layoutList.back()->setImages((const char[][25]){{"NurseCalledButton.png"},{"SpellerButton.png"},
+		{"YesButton.png"},{"CommonNeedsButton.png"},{"SleepModeButton.png"},{"MediaControlButton.png"},
+		{"NoButton.png"},{"MedicalNeedsButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"NurseCalledButton.png"},{"SpellerButtonN.png"},
+		{"YesButtonN.png"},{"CommonNeedsButtonN.png"},{"SleepModeButtonN.png"},{"MediaControlButtonN.png"},
+		{"NoButtonN.png"},{"MedicalNeedsButtonN.png"}});
+	layoutList.back()->setLinksTimedName(2*60,(const char[25]){"NurseOn"});
+	layoutList.back()->addText((std::string)"Nurse has been called!",-.30,-0.05,1,(const GLfloat[]){1,1,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+		
+	
+	//Nurse On the Way
+	layoutList.push_back(new layoutView(8));
+	layoutList.back()->setName((const char[25]){"NurseOn"});
+	layoutList.back()->setLinksName((const char[][25]){{"0"},{"Speller"},
+		{"Yes"},{"CommonNeeds"},{"SleepMode"},{"MediaControl"},
+		{"No"},{"MedicalNeeds"}});
+	layoutList.back()->setAngles((const GLfloat[]){0,38,90,142,180,218,270,322});
+	layoutList.back()->setBlockSize((GLfloat)0.3,(GLfloat)(0.45));
+	layoutList.back()->setR((const GLfloat[]){0.7,0.75,0.8,0.75,0.7,0.75,0.8,0.75});
+	layoutList.back()->setFrequencies((const float []){10,4.6,5.4,6.6,8.5,5,6,7.5});
+	layoutList.back()->setImages((const char[][25]){{"NurseWayButton.png"},{"SpellerButton.png"},
+		{"YesButton.png"},{"CommonNeedsButton.png"},{"SleepModeButton.png"},{"MediaControlButton.png"},
+		{"NoButton.png"},{"MedicalNeedsButton.png"}});
+	layoutList.back()->setImagesN((const char[][25]){{"NurseWayButton.png"},{"SpellerButtonN.png"},
+		{"YesButtonN.png"},{"CommonNeedsButtonN.png"},{"SleepModeButtonN.png"},{"MediaControlButtonN.png"},
+		{"NoButtonN.png"},{"MedicalNeedsButtonN.png"}});
+	layoutList.back()->setLinksTimedName(5*60,(const char[25]){"index"});
+	layoutList.back()->addText((std::string)"Nurse is on the way!",-.30,-0.05,1,(const GLfloat[]){0,0,1});
+	//layoutList.back()->addText((std::string)"f,g,h,{",-.30,-0.05,1,(const GLfloat[]){1,1,0});
+	layoutList.back()->our_font = &our_fontBig;
+	
+	
+		
 	
 	//Common Needs
 	layoutList.push_back(new layoutView(8));
@@ -434,6 +482,12 @@ void display (void)
 		drawObject(calibration_freq, true);
 	else
 		drawObject(selected, false); 
+		
+	if (layoutList[curr_layout]->_linkedTimer>0){
+		if((--layoutList[curr_layout]->_linkedTimer)==0){
+			setLayout( layoutList[curr_layout]->_linkTimedName);
+		}
+	}
 	//Clear texture to write text
 	glBindTexture(GL_TEXTURE_2D, 0);
 	// Disaplay update frequency 
@@ -452,7 +506,7 @@ void display (void)
 		glColor3f(1.0f,0.0f,0.0f); 
 		drawFeedback(feedback_box,-.1,0.0,3);
 		feedback_box_count--;
-		if (feedback_box_count==0){
+		if ((feedback_box_count==0) && !(collect_data)){
 			setLayout( layoutList[curr_layout]->getLinkName(selected));
 			selected = -1;
 		}
@@ -613,6 +667,13 @@ static void Key(unsigned char key, int x, int y)
 			}
 			
 		break;
+		//Collect Data
+		case 'D':
+			exec('D');
+		break;
+		case 'E':
+			exec('E');
+		break;
 		//Training Mode
 		case 'C':
 			exec('C');
@@ -634,20 +695,34 @@ static void Key(unsigned char key, int x, int y)
 
 
 void exec(char code){
-	if (code=='C') {
+	if (code=='D') {
+		setLayout("index");
+		collect_data = true;
+	}else if (code=='E') {
+		setLayout("index");
+		collect_data = false;
+	}else if (code=='C') {
 		setLayout("index");
 		calibration_mode = true;
 	}else if (code=='R') {
 		calibration_mode = false;
+		collect_data = false;
 	}else {
 		if (calibration_mode){
 			code = std::atoi(&code);
 			calibration_freq = code-1;
 		}
-		else {
+		else if (collect_data){
 			code = std::atoi(&code);
+			feedback_box_count=FEEDBACK_TIMER;
+			feedback_box = code;
+		}
+		else{
+			code = std::atoi(&code);
+			
 			if (layoutList[curr_layout]->is("MediaControl")){	
-				selected = code-1;
+				selected = layoutList[curr_layout]->findSelected(code-1);
+				//selected = code-1;
 				if (strcmp(layoutList[curr_layout]->getLinkName(selected).c_str(),"_ListUP")==0){
 					layoutList[curr_layout]->listUP();
 					selected=-1;
@@ -660,7 +735,8 @@ void exec(char code){
 			}
 			feedback_box_count=FEEDBACK_TIMER;
 			feedback_box = code;
-			selected = feedback_box-1;
+			selected = layoutList[curr_layout]->findSelected(feedback_box-1);
+			//selected = feedback_box-1;
 		}
 	}
 }
@@ -718,8 +794,8 @@ int main (int argc, char **argv)
 	UDP = new udp_server("0.0.0.0", 1050);
 	UDPClient = new udp_client("127.0.0.1", 1051);
 	
-	setLayout("index");
-	//setLayout("MediaControl");
+	//setLayout("index");
+	setLayout("NurseOn");
 	
 	//  Start GLUT event processing loop
 	glutMainLoop();

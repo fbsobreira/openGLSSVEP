@@ -47,6 +47,7 @@ void make_dlist ( FT_Face face, char ch, GLuint list_base, GLuint * tex_base ) {
 	//our texture.
 	int width = next_p2( bitmap.width );
 	int height = next_p2( bitmap.rows );
+	
 
 	//Allocate memory for the texture data.
 	GLubyte* expanded_data = new GLubyte[ 2 * width * height];
@@ -244,6 +245,7 @@ void print(const font_data &ft_font, float x, float y, const char *fmt, ...)  {
 	    vsprintf(text, fmt, ap);						// And Converts Symbols To Actual Numbers
 	va_end(ap);											// Results Are Stored In Text
 	}
+	
 
 
 	//Here is some code to split the text that we have been

@@ -12,6 +12,20 @@
 		public:
 			udp_client_runtime_error(const char *w) : std::runtime_error(w){}
 	};
+	
+#ifndef __linux__ 
+// inet_aton for windows
+int inet_aton(const char *address, struct in_addr *sock){
+     
+    int s;
+    s = inet_addr(address);
+    if ( s == 1 && strcmp (address, "255.255.255.225") )
+    return 0;
+    sock->s_addr = s;
+     
+    return 1;
+}
+#endif
 
 /**
 	*Here we need to initialize the client object.
@@ -39,8 +53,7 @@ udp_client::udp_client(const std::string& addr, int port) : f_port(port), f_addr
 	server.sin_family = AF_UNSPEC;
 	server.sin_port = htons(port);
 	/* Set server address */
-	inet_aton("127.0.0.1", &server.sin_addr);
-	
+	inet_aton("127.0.0.1", &server.sin_addr);	
 	
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
